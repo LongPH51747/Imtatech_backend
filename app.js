@@ -9,6 +9,9 @@ var usersRouter = require('./routes/users');
 
 var app = express();
 var db = require('./src/config/db')
+var cart = require('./src/module/cart/cart.router')
+var cate = require('./src/module/category/cate.router')
+var product = require('./src/module/product/product.router')
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
