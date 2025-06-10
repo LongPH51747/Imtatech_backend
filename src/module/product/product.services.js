@@ -38,3 +38,35 @@ exports.get = async (id) => {
     console.log(error);
   }
 };
+
+exports.update = async (data, id) => {
+  try {
+    const updateProduct = await Product.findById(id)
+    if (!updateProduct) {
+      return
+    }
+    updateProduct.name_Product = data.name_Product
+    updateProduct.price = data.price
+    updateProduct.size = data.size
+    updateProduct.stock = data.stock
+    updateProduct.origin = data.origin
+    updateProduct.attribute = data.attribute
+    updateProduct.image = data.image
+    updateProduct.id_cate = data.id_cate
+    const saveProduct = await updateProduct.save()
+    return saveProduct
+  } catch (error) {
+
+    
+  }
+}
+
+exports.delete = async (id) => {
+  try {
+    const deleteById = await Product.findByIdAndDelete(id)
+    return deleteById
+  } catch (error) {
+    console.log(error);
+    throw error
+  }
+}

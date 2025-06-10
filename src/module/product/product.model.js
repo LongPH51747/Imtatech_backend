@@ -11,7 +11,7 @@ const Product = new Schema(
     price: { type: Number },
     stock: { type: Number },
     origin: { type: String },
-    attribute: { type: String },
+    attribute: { type: String, default: '' },
     // description: { type: String },
     sold: { type: Number, default: 0 },
     rate: { type: Number, default: 0 },

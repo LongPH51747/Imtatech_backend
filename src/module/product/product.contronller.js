@@ -10,7 +10,7 @@ exports.create = async (req, res) => {
     }
     return res
       .status(200)
-      .json({ message: "Create success", data: saveProduct });
+      .json(saveProduct );
   } catch (error) {
     res
       .status(500)
@@ -26,7 +26,7 @@ exports.getById = async (req, res) => {
     if (!productData) {
       return res.status(404).json({message: "Cannot found product"})
     }
-    return res.status(200).json({ message: "Get successs", data: productData });
+    return res.status(200).json( productData );
   } catch (error) {
     console.log(error);
   }
@@ -38,8 +38,37 @@ exports.get = async (req, res) => {
       if (!productData) {
       return res.status(404).json({message: "Cannot found product"})
     }
-    return res.status(200).json({ message: "Get successs", data: productData });
+    return res.status(200).json(productData );
   } catch (error) {
     console.log(error);
   }
 };
+
+exports.update = async (req, res) => {
+  try {
+    const data = req.body
+    const {id} = req.params
+    const updateProduct = await productServices.update(data, id)
+    if (!updateProduct) {
+      res.status(404).json({message: "Cannot found product"})
+    }
+    return res.status(200).json(updateProduct)
+  } catch (error) {
+    console.log(error);
+    throw error
+  }
+}
+
+exports.delete = async (req, res) => {
+  try {
+    const {id} = req.params
+    const deleteProd = await productServices.delete(id)
+    if (!deleteProd) {
+      return res.status(404).json({message: "Cannot found Product"})
+    }
+    return res.status(200).json(deleteProd)
+  } catch (error) {
+    console.log(error);
+    throw error
+  }
+}

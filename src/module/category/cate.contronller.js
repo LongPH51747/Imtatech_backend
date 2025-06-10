@@ -8,7 +8,7 @@ exports.create = async (req, res) => {
       return res.status(40).json({ message: "Cannot found to cate" });
     }
 
-    return res.status.json({ message: "Create success", data: createCate });
+    return res.status(200).json(createCate );
   } catch (error) {
     res.status(500).json({ message: "Failed to create", error: error });
   }
@@ -22,7 +22,7 @@ exports.delete = async (req, res) => {
       return res.status(40).json({ message: "Cannot found to cate" });
     }
 
-    return res.status.json({ message: "Delete success", data: delteCate });
+    return res.status(200).json(delteCate );
   } catch (error) {
     res.status(500).json({ message: "Failed to delete", error: error });
   }
@@ -36,7 +36,7 @@ exports.get = async (req, res) => {
       return res.status(40).json({ message: "Cannot found to cate" });
     }
 
-    return res.status.json({ message: "Get success", data: cateData });
+    return res.status(200).json(cateData );
   } catch (error) {
     res.status(500).json({ message: "Failed to delete", error: error });
   }
@@ -50,7 +50,7 @@ exports.getById = async (req, res) => {
       return res.status(40).json({ message: "Cannot found to cate" });
     }
 
-    return res.status.json({ message: "Get success", data: cateDataById });
+    return res.status(200).json(cateDataById );
   } catch (error) {
     res.status(500).json({ message: "Failed to delete", error: error });
   }

@@ -15,18 +15,13 @@ exports.addItemToCart = async (userId, itemData) => {
       throw error;
     }
 
-    if (!itemData || !itemData.id_product || !itemData.id_variant) {
-        const error = new Error('itemData không đầy đủ. Yêu cầu id_product và id_variant.');
+    if (!itemData || !itemData.id_product) {
+        const error = new Error('itemData không đầy đủ. Yêu cầu id_product.');
         error.statusCode = 400;
         throw error;
     }
     if (!mongoose.Types.ObjectId.isValid(itemData.id_product)) {
       const error = new Error('id_product không hợp lệ.');
-      error.statusCode = 400;
-      throw error;
-    }
-    if (!mongoose.Types.ObjectId.isValid(itemData.id_variant)) {
-      const error = new Error('id_variant không hợp lệ.');
       error.statusCode = 400;
       throw error;
     }
@@ -44,7 +39,7 @@ exports.addItemToCart = async (userId, itemData) => {
       throw error;
     }
     if (product.stock < itemData.quantity) {
-      const error = new Error(`Sản phẩm "${product.name_Product} - ${variantDetails.variant_size || ''} ${variantDetails.variant_color || ''}" không đủ số lượng tồn kho. Chỉ còn ${variantDetails.variant_stock}.`);
+      const error = new Error(`Sản phẩm "${product.name_Product} - ${product.size || ''}" không đủ số lượng tồn kho. Chỉ còn ${product.stock}.`);
       error.statusCode = 400;
       throw error;
     }
@@ -61,7 +56,7 @@ exports.addItemToCart = async (userId, itemData) => {
       });
     }
 
-    // 3. Kiểm tra xem variant này đã có trong giỏ hàng chưa (sử dụng id_variant)
+    // 3. Kiểm tra xem product này đã có trong giỏ hàng chưa (sử dụng id_variant)
     const existingItemIndex = cart.cartItem.findIndex(
       (ci) => ci.id_product && ci.id_product.toString() === itemData.id_product.toString()
     );
@@ -296,3 +291,35 @@ exports.updateCartItemQuantity = async (newQuantity, cartItemId, userId) => {
     session.endSession();
   }
 };
+
+exports.getByUserId = async(id) => {
+  try {
+    if (!id) {
+      const error = new Error('ID người dùng không được để trống');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      const error = new Error('ID người dùng không hợp lệ');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const dataCartByUser = await Cart.findOne({userId: id});
+    
+    if (!dataCartByUser) {
+      const error = new Error('Không tìm thấy giỏ hàng của người dùng này');
+      error.statusCode = 404;
+      throw error;
+    }
+    
+    return dataCartByUser;
+  } catch (error) {
+    console.error("Service getByUserId error:", error);
+    if (!error.statusCode) {
+      error.statusCode = 500;
+    }
+    throw error;
+  }
+}

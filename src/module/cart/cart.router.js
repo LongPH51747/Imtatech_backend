@@ -27,6 +27,10 @@ router.patch("/updateQuantity/cartItemId/:id", async(req, res) => {
     await cartContronller.updateCartItemQuantity(req, res)
 })
 
+router.get('/getByUserId/:id', async(req, res) => {
+    await cartContronller.getByUserId(req, res)
+})
+
 // router.delete('/deleteCartItem/:cartItemId', async(req, res) => {
 //     await cartContronller.deleteCartItem(req, res)
 // })

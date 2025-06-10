@@ -12,7 +12,7 @@ exports.addToCart = async (req, res) => {
 
     return res
       .status(200)
-      .json({ message: "Add to cart success", data: addToCart });
+      .json(addToCart );
   } catch (error) {
     res.status(500).json({ message: "Failed to add cart" });
   }
@@ -26,7 +26,7 @@ exports.updateStatusToFalse = async (req, res) => {
       return res.status(404).json({message: "Cannot found to cart item"})
     }
 
-    return res.status(200).json({message: "Update status to succees", data: statusFalse})
+    return res.status(200).json(statusFalse)
   } catch (error) {
     console.log(error);
     res.status(500).json({message: "Failed to update status to false", error: error})
@@ -41,7 +41,7 @@ exports.updateStatusToTrue = async (req, res) => {
       return res.status(404).json({message: "Cannot found to cart item"})
     }
 
-    return res.status(200).json({message: "Update status to succees", data: statusTrue})
+    return res.status(200).json(statusTrue)
   } catch (error) {
     console.log(error);
     res.status(500).json({message: "Failed to update status to false", error: error})
@@ -71,7 +71,7 @@ exports.removeCartItem = async (req, res) => {
 
     return res
       .status(200)
-      .json({ message: "Delete success", data: removeCartItem });
+      .json(removeCartItem );
   } catch (error) {
     res.status(500).json({ message: "Failed to remove cart item" });
   }
@@ -96,8 +96,23 @@ exports.updateCartItemQuantity = async(req, res) => {
       return res.status(404).json({message: "Cannot found cart item"})
     }
 
-    return res.status(200).json({message: "Update success", data: updateQuantity})
+    return res.status(200).json(updateQuantity)
   } catch (error) {
     res.status(500).json({message: "Failed to update quantity from cart item"})
   }
 }
+
+exports.getByUserId = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const dataCartByUserId = await cartService.getByUserId(id);
+    if (dataCartByUserId == 0) {
+      return res.status(404).json({ message: "Cannot found userId" });
+    } else if (!dataCartByUserId) {
+      return res.status(404).json({ message: "Cannot found cart data" });
+    }
+    return res.status(200).json(dataCartByUserId);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to get by user id" });
+  }
+};

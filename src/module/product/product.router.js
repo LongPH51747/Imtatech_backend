@@ -14,4 +14,8 @@ router.get("/getById/:id", async (req, res) => {
   await productContronller.getById(req, res);
 });
 
+router.put('/updateProdById/:id', productContronller.update)
+
+router.delete('/delete/:id', productContronller.delete)
+
 module.exports = router;
