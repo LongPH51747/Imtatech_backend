@@ -6,8 +6,8 @@ const logger = require('morgan');
 const createError = require('http-errors');
 
 const indexRouter = require('./routes/index');
-const userRouter = require('./routes/user');
-const categoryRouter = require('./routes/category');
+const userRouter = require('./src/module/user/user.router');
+const categoryRouter = require('./src/module/category/category.router');
 
 const app = express();
 const db = require('./src/config/db');
