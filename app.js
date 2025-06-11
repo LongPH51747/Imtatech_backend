@@ -26,6 +26,9 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
 db.connectDB();
+app.use('/api/product',product)
+app.use('/api/cate',cate)
+app.use('/api/cart',cart)
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

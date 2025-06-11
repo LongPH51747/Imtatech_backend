@@ -6,11 +6,9 @@ exports.create = async (req, res) => {
 
     const saveProduct = await productServices.create(createProduct);
     if (!saveProduct) {
-      return res.status(404).json({message: "Cannot found product"})
+      return res.status(404).json({ message: "Cannot found product" });
     }
-    return res
-      .status(200)
-      .json(saveProduct );
+    return res.status(200).json(saveProduct);
   } catch (error) {
     res
       .status(500)
@@ -24,9 +22,9 @@ exports.getById = async (req, res) => {
     // const variant = await req.body
     const productData = await productServices.getById(id);
     if (!productData) {
-      return res.status(404).json({message: "Cannot found product"})
+      return res.status(404).json({ message: "Cannot found product" });
     }
-    return res.status(200).json( productData );
+    return res.status(200).json(productData);
   } catch (error) {
     console.log(error);
   }
@@ -35,10 +33,10 @@ exports.getById = async (req, res) => {
 exports.get = async (req, res) => {
   try {
     const productData = await productServices.get();
-      if (!productData) {
-      return res.status(404).json({message: "Cannot found product"})
+    if (!productData) {
+      return res.status(404).json({ message: "Cannot found product" });
     }
-    return res.status(200).json(productData );
+    return res.status(200).json(productData);
   } catch (error) {
     console.log(error);
   }
@@ -46,29 +44,57 @@ exports.get = async (req, res) => {
 
 exports.update = async (req, res) => {
   try {
-    const data = req.body
-    const {id} = req.params
-    const updateProduct = await productServices.update(data, id)
+    const data = req.body;
+    const { id } = req.params;
+    const updateProduct = await productServices.update(data, id);
     if (!updateProduct) {
-      res.status(404).json({message: "Cannot found product"})
+      res.status(404).json({ message: "Cannot found product" });
     }
-    return res.status(200).json(updateProduct)
+    return res.status(200).json(updateProduct);
   } catch (error) {
     console.log(error);
-    throw error
+    throw error;
   }
-}
+};
 
 exports.delete = async (req, res) => {
   try {
-    const {id} = req.params
-    const deleteProd = await productServices.delete(id)
+    const { id } = req.params;
+    const deleteProd = await productServices.delete(id);
     if (!deleteProd) {
-      return res.status(404).json({message: "Cannot found Product"})
+      return res.status(404).json({ message: "Cannot found Product" });
     }
-    return res.status(200).json(deleteProd)
+    return res.status(200).json(deleteProd);
   } catch (error) {
     console.log(error);
-    throw error
+    throw error;
   }
-}
+};
+
+exports.updateStatusToTrue = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateStatusToTrue= await productServices.updateStatusToTrue(id);
+    if (!updateStatusToTrue) {
+      res.status(404).json({ message: "Cannot found product" });
+    }
+    return res.status(200).json(updateStatusToTrue);
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
+
+exports.updateStatusToFalse = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateStatusToFalse= await productServices.updateStatusToFalse(id);
+    if (!updateStatusToFalse) {
+      return res.status(404).json({ message: "Cannot found product" });
+    }
+    return res.status(200).json(updateStatusToFalse);
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};

@@ -11,8 +11,6 @@ exports.create = async (createProduct) => {
       origin: createProduct.origin,
       attribute: createProduct.attribute,
       size: createProduct.size,
-      sold: createProduct.sold,
-      rate: createProduct.rate,
     });
     const saveData = await data.save();
     return saveData;
@@ -67,6 +65,40 @@ exports.delete = async (id) => {
     return deleteById
   } catch (error) {
     console.log(error);
+    throw error
+  }
+}
+
+exports.updateStatusToTrue = async (id) => {
+  try {
+    const product = await Product.findById(id)
+    if (!product) {
+      const error = new Error("Cannot found product")
+      error.statusCode = 404
+      throw error
+    }
+    product.status = true
+    const saveStatus = await product.save()
+    return saveStatus
+  } catch (error) {
+    error.statusCode = 500
+    throw error
+  }
+}
+
+exports.updateStatusToFalse = async (id) => {
+  try {
+    const product = await Product.findById(id)
+    if (!product) {
+      const error = new Error("Cannot found product")
+      error.statusCode = 404
+      throw error
+    }
+    product.status = false
+    const saveStatus = await product.save()
+    return saveStatus
+  } catch (error) {
+    error.statusCode = 500
     throw error
   }
 }
