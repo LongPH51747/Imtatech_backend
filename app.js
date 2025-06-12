@@ -7,11 +7,13 @@ const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
 var logger = require('morgan');
 
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
+const indexRouter = require('./routes/index');
+const userRouter = require('./src/module/user/user.router');
+const categoryRouter = require('./src/module/category/category.router');
 
-var app = express();
-var db = require('./src/config/db')
+const app = express();
+const db = require('./src/config/db');
+
 var cart = require('./src/module/cart/cart.router')
 var cate = require('./src/module/category/cate.router')
 var product = require('./src/module/product/product.router')
@@ -27,26 +29,26 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// ROUTES
 app.use('/', indexRouter);
-app.use('/users', usersRouter);
+app.use('/api/users', userRouter);
+app.use('/api/categories', categoryRouter);
 
+// DB connection
 db.connectDB();
 app.use('/api/product', product)
 app.use('/api/cart', cart)
 app.use('/api/cate', cate)
 app.use('/api/order', order)
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
+app.use((req, res, next) => {
   next(createError(404));
 });
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); // Cung cap API docs
 // error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
+app.use((err, req, res, next) => {
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-  // render the error page
   res.status(err.status || 500);
   res.render('error');
 });
