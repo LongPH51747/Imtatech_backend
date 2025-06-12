@@ -18,4 +18,6 @@ router.put('/updateProdById/:id', productContronller.update)
 
 router.delete('/delete/:id', productContronller.delete)
 
+router.get('/search-product', productController.searchProduct)
+
 module.exports = router;

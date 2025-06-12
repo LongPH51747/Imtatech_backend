@@ -70,3 +70,19 @@ exports.delete = async (id) => {
     throw error
   }
 }
+
+exports.searchProduct = async(query, categoryId)  =>{
+    const keyword = new RegExp(query, 'i')
+    const condition = {
+        $or: [
+            {product_name: keyword}, // theo tên
+            {'product_variant.variant_color': keyword} // tạm thời để theo cả màu về sau lọc tiếp 
+        ]
+    }
+
+    if (categoryId) { // nếu có thêm cái id của bọn danh mục để lọc 
+        condition.product_category = categoryId
+    }
+
+    return await Product.find(condition).populate('product_category').exec()
+}

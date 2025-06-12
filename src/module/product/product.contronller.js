@@ -72,3 +72,14 @@ exports.delete = async (req, res) => {
     throw error
   }
 }
+
+
+exports.searchProduct = async(req, res, next) =>{
+    try {
+        const {q, categoryId} = req.query
+        const result = await productService.searchProduct( q || '', categoryId)
+        res.status(200).json(result)
+    } catch (error) {
+        next(error)
+    }
+}

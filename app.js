@@ -1,7 +1,10 @@
+require('dotenv').config();
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
+const cors = require('cors');
+const swaggerUi = require('swagger-ui-express');
 var logger = require('morgan');
 
 var indexRouter = require('./routes/index');
@@ -12,6 +15,8 @@ var db = require('./src/config/db')
 var cart = require('./src/module/cart/cart.router')
 var cate = require('./src/module/category/cate.router')
 var product = require('./src/module/product/product.router')
+var order = require('./src/module/order/order.router')
+const swaggerSpec = require('./src/docs/swagger')
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
@@ -26,12 +31,15 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
 db.connectDB();
-
+app.use('/api/product', product)
+app.use('/api/cart', cart)
+app.use('/api/cate', cate)
+app.use('/api/order', order)
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));
 });
-
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); // Cung cap API docs
 // error handler
 app.use(function(err, req, res, next) {
   // set locals, only providing error in development
