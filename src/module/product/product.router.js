@@ -16,6 +16,10 @@ router.get("/getById/:id", async (req, res) => {
 
 router.put('/updateProdById/:id', productContronller.update)
 
+router.patch('/updateStatusToTrue/:id', productContronller.updateStatusToTrue)
+
+router.patch('/updateStatusToFalse/:id', productContronller.updateStatusToFalse)
+
 router.delete('/delete/:id', productContronller.delete)
 
 router.get('/search-product', productController.searchProduct)

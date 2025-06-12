@@ -15,6 +15,7 @@ const Product = new Schema(
     // description: { type: String },
     sold: { type: Number, default: 0 },
     rate: { type: Number, default: 0 },
+    status: {type: String, default: true}
   },
   {
     timestamps: true,
