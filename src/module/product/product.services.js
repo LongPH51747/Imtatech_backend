@@ -37,6 +37,23 @@ exports.get = async (id) => {
   }
 };
 
+exports.getAllProductsLimit = async (page, limit) => {
+  const skip = (page - 1) * limit;
+
+  const products = await Product.find()
+    .skip(skip)
+    .limit(limit)
+    .populate('id_cate')
+    .exec();
+
+  const total = await Product.countDocuments();
+
+  return {
+    products,
+    total
+  };
+};
+
 exports.update = async (data, id) => {
   try {
     const updateProduct = await Product.findById(id);

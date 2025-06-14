@@ -14,6 +14,8 @@ router.get("/getById/:id", async (req, res) => {
   await productContronller.getById(req, res);
 });
 
+router.get('/get-all-products-limit', productContronller.getAllProductsLimit)
+
 router.put('/updateProdById/:id', productContronller.update)
 
 router.patch('/updateStatusToTrue/:id', productContronller.updateStatusToTrue)

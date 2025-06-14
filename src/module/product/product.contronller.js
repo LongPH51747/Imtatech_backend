@@ -42,6 +42,30 @@ exports.get = async (req, res) => {
   }
 };
 
+exports.getAllProductsLimit = async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 4;
+
+    const { products, total } = await productServices.getAllProductsLimit(page, limit);
+
+    const result = products.map(product => {
+      return {
+        ...product.toObject(),
+      };
+    });
+
+    res.status(200).json({
+      data: result,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.update = async (req, res) => {
   try {
     const data = req.body;
