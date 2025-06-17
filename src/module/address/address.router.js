@@ -2,7 +2,7 @@ const express = require('express')
 const router = express.Router()
 const addressController = require('./address.contronller')
 
-router.post('/create', async(req, res) => {
+router.post('/create/userId/:id', async(req, res) => {
     await addressController.create(req, res)
 })
 
@@ -10,7 +10,7 @@ router.get('/get', async(req, res)=>{
     await addressController.get(req, res)
 })
 
-router.get('/getAddressByUserId/:userId', async(req, res)=>{
+router.get('/getAddressByUserId/:id', async(req, res)=>{
     await addressController.getAddressByUserID(req, res)
 })
 
@@ -21,6 +21,10 @@ router.put('/update/:id', async(req, res)=>{
 router.patch('/update/is_default/:id', async(req, res)=>{
     await addressController.updateIsDefault(req, res)
 })
+
+router.get('/getById/:id', addressController.getById)
+
+router.delete('/deleteAddress/:id', addressController.deleteAddress)
 
 module.exports = router
 
@@ -37,17 +41,35 @@ module.exports = router
 
 /**
  * @swagger
- * /api/address/create:
+ * /api/address/create/userId/{id}:
  *   post:
  *     summary: Thêm địa chỉ
  *     tags:
  *       - address
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID người dùng
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/address'
+ *             type: object
+ *             properties: 
+ *               fullName: 
+ *                 type: string
+ *                 default: ""
+ *               addressDetail: 
+ *                 type: string
+ *               phone_number: 
+ *                 type: string
+ *               is_default:
+ *                 type: boolean
+ *                 default: false
  *     responses:
  *       '200':
  *         description: create success
@@ -76,7 +98,7 @@ module.exports = router
 
 /**
  * @swagger
- * /api/address/getAddressByUserId/{userId}:
+ * /api/address/getAddressByUserId/{id}:
  *   get:
  *     summary: Lấy address theo ID người dùng
  *     tags: [address]
@@ -147,6 +169,50 @@ module.exports = router
  *     responses:
  *       '200':
  *         description: update success
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/address'
+ */
+
+/**
+ * @swagger
+ * /api/address/getById/{id}:
+ *   get:
+ *     summary: Lấy address theo ID
+ *     tags: [address]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID Address
+ *     responses:
+ *       200:
+ *         description: address tương ứng
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/address'
+ */
+
+/**
+ * @swagger
+ * /api/address/deleteAddress/{id}:
+ *   delete:
+ *     summary: Xóa address theo ID
+ *     tags: [address]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID Address
+ *     responses:
+ *       200:
+ *         description: address tương ứng
  *         content:
  *           application/json:
  *             schema:

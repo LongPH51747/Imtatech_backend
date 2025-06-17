@@ -3,12 +3,13 @@ const addressService = require("./address.services");
 exports.create = async(req, res) => {
   try {
     const addressCreate = req.body;
-    if (!addressCreate.userId) {
+    const {id} = req.params
+    if (!id) {
       return res.status(400).json({message: "Failed to create beacause your userId cannot found"})
     }
     console.log(addressCreate);
     
-    const saveAddress = await addressService.create(addressCreate)
+    const saveAddress = await addressService.create(addressCreate, id)
 
     return res.status(200).json(saveAddress)
   } catch (error) {
@@ -34,8 +35,8 @@ exports.get = async(req, res) => {
 
 exports.getAddressByUserID = async(req, res) => {
   try {
-    const {userId} = req.params
-    const getDataAddress = await addressService.getByUserId(userId)
+    const {id} = req.params
+    const getDataAddress = await addressService.getByUserId(id)
     if (!getDataAddress) {
         return res.status(404).json({message: "Cannot found address in addressContronller"})
     }
@@ -80,5 +81,32 @@ exports.updateIsDefault = async(req, res) => {
 
   } catch (error) {
     return res.status(500).json({message: "Failed to update is_default in address.contronller"})
+  }
+}
+
+exports.getById = async (req, res) => {
+  try {
+    const {id} = req.params
+    const getByIdAddress = await addressService.getById(id)
+    if(!getByIdAddress) {
+      return res.status(404).json({message: "Cannot found address"})
+    }
+
+    return res.status(200).json(getByIdAddress)
+  } catch (error) {
+    res.status(500).json({message: "Failed to get by id"})
+  }
+}
+
+exports.deleteAddress = async(req, res) => {
+  try {
+    const {id} = req.params
+    if(!id) {
+      return res.status(404).json({message: "Cannot found address"})
+    }
+    const address = await addressService.deleteAddress(id)
+    return res.status(200).json(address)
+  } catch (error) {
+    res.status(500).json({message: "Faile to delete address"})
   }
 }

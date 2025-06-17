@@ -95,7 +95,7 @@ exports.delete = async (req, res) => {
   }
 }
 
-exports.searchProduct = async(req, res, next) =>{
+exports.searchProduct = async(req, res, next) => {
     try {
         const {q, categoryId} = req.query
         const result = await productService.searchProduct( q || '', categoryId)
