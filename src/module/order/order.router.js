@@ -1,6 +1,5 @@
 const express = require("express");
 const router = express.Router();
-const orderController2 = require("./order.controller(2)");
 const orderController = require("./order.contronller");
 
 // router.post("/create/:userId", async (req, res) => {

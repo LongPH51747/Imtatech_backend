@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const User = require('../src/module/model/User');
+const User = require('../src/module/user/user.model');
 
 const JWT_SECRET = 'imtatech_secret';
 

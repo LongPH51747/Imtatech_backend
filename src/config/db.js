@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
 
 const mongoURI =
-  'mongodb+srv://nguyenphuongnamintern:fLVBj9UXds1ERc1J@cluster0.tkrkjv6.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
-  // "mongodb+srv://root:123@cluster0.goxvqbr.mongodb.net/imtatech?retryWrites=true&w=majority&appName=Cluster0";
+  // 'mongodb+srv://nguyenphuongnamintern:fLVBj9UXds1ERc1J@cluster0.tkrkjv6.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+  "mongodb+srv://root:123@cluster0.goxvqbr.mongodb.net/imtatech?retryWrites=true&w=majority&appName=Cluster0";
 
 const connectDB = async () => {
   try {

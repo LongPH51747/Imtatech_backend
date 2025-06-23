@@ -5,107 +5,153 @@ const mongoose = require('mongoose')
 
 exports.addItemToCart = async (userId, itemData) => {
   try {
-    console.log("Service: Bắt đầu addItemToCart cho userId:", userId); // Service: Starting addItemToCart for userId:
-    console.log("Service: Item cần thêm/cập nhật:", itemData); // Service: Item to add/update:
+    console.log("Service: Bắt đầu addItemToCart cho userId:", userId);
+    console.log("Service: Item cần thêm/cập nhật:", itemData);
 
-    // --- Kiểm tra đầu vào ---
     if (!mongoose.Types.ObjectId.isValid(userId)) {
-      const error = new Error('UserID không hợp lệ.');
+      const error = new Error("UserID không hợp lệ.");
       error.statusCode = 400;
       throw error;
     }
 
-    if (!itemData || !itemData.id_product) {
-        const error = new Error('itemData không đầy đủ. Yêu cầu id_product.');
-        error.statusCode = 400;
+    if (!itemData || !mongoose.Types.ObjectId.isValid(itemData.id_product)) {
+      const error = new Error(
+        "id_product không hợp lệ hoặc itemData bị thiếu."
+      );
+      error.statusCode = 400;
+      throw error;
+    }
+
+    if (
+      typeof itemData.quantity !== "number" ||
+      itemData.quantity <= 0 ||
+      !Number.isInteger(itemData.quantity)
+    ) {
+      const error = new Error("Số lượng (quantity) không hợp lệ.");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // 2. Bắt đầu transaction
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      // 3. Lấy thông tin sản phẩm và variant
+      const product = await Product.findById(itemData.id_product).session(
+        session
+      );
+
+      if (!product) {
+        const error = new Error("Không tìm thấy sản phẩm.");
+        error.statusCode = 404;
         throw error;
-    }
-    if (!mongoose.Types.ObjectId.isValid(itemData.id_product)) {
-      const error = new Error('id_product không hợp lệ.');
-      error.statusCode = 400;
-      throw error;
-    }
-    if (typeof itemData.quantity !== 'number' || itemData.quantity <= 0 || !Number.isInteger(itemData.quantity)) {
-      const error = new Error('Số lượng (quantity) không hợp lệ.');
-      error.statusCode = 400;
-      throw error;
-    }
+      }
 
-    // 1. Lấy thông tin chi tiết của product và variant từ DB
-    const product = await Product.findById(itemData.id_product);
-    if (!product) {
-      const error = new Error(`Không tìm thấy sản phẩm với ID: ${itemData.id_product}`);
-      error.statusCode = 404;
-      throw error;
-    }
-    if (product.stock < itemData.quantity) {
-      const error = new Error(`Sản phẩm "${product.name_Product} - ${product.size || ''}" không đủ số lượng tồn kho. Chỉ còn ${product.stock}.`);
-      error.statusCode = 400;
-      throw error;
-    }
-
-    // 2. Tìm giỏ hàng của người dùng, hoặc tạo mới nếu chưa có
-    let cart = await Cart.findOne({ userId: userId });
-
-    if (!cart) {
-      console.log("Service: Không tìm thấy giỏ hàng, tạo giỏ hàng mới cho userId:", userId); // Service: Cart not found, creating new cart for userId:
-      cart = new Cart({
-        userId: userId,
-        cartItem: [],
-        totalPrice: 0, // Sẽ được tính lại bởi pre-save hook
-      });
-    }
-
-    // 3. Kiểm tra xem product này đã có trong giỏ hàng chưa (sử dụng id_variant)
-    const existingItemIndex = cart.cartItem.findIndex(
-      (ci) => ci.id_product && ci.id_product.toString() === itemData.id_product.toString()
-    );
-
-    if (existingItemIndex > -1) {
-      // Nếu đã có, cộng dồn quantity
-      console.log("Service: Biến thể sản phẩm đã có trong giỏ, cập nhật số lượng."); // Service: Product variant already in cart, updating quantity.
-      const existingItem = cart.cartItem[existingItemIndex];
-      const newQuantity = existingItem.quantity + itemData.quantity;
-
-      // (Tùy chọn) Kiểm tra lại tồn kho khi cộng dồn
-      if (product.stock < newQuantity) {
-        const error = new Error(`Không thể thêm ${itemData.quantity} sản phẩm "${product.name_Product} - ${product.size || ''}". Số lượng trong giỏ (${existingItem.quantity}) cộng với số lượng yêu cầu (${itemData.quantity}) vượt quá tồn kho (${product.stock}).`);
+      if (!product.product_status) {
+        const error = new Error("Sản phẩm này hiện không còn kinh doanh.");
         error.statusCode = 400;
         throw error;
       }
-      existingItem.quantity = newQuantity;
 
-      // Cập nhật status nếu được cung cấp trong itemData, ngược lại giữ nguyên status cũ
-      if (typeof itemData.status === 'boolean') {
-        existingItem.status = itemData.status;
+      let image_url = "";
+
+      if (Buffer.isBuffer(product.image)) {
+        const base64 = product.image.toString("base64");
+        const type = product.image || "image/png";
+        image_url = `data:${type};base64,${base64}`;
+      } else if (typeof product.image === "string") {
+        image_url = product.image;
       }
-      // Nếu bạn muốn luôn đặt status thành true khi cập nhật (ví dụ: kích hoạt nó), bạn có thể làm:
-      // existingItem.status = true;
+      // 4. Kiểm tra tồn kho
+      if (product.stock < itemData.quantity) {
+        const error = new Error(
+          `Sản phẩm "${product.product_name}" -  Size ${product.size} chỉ còn ${product.stock} sản phẩm trong kho.`
+        );
+        error.statusCode = 400;
+        throw error;
+      }
 
-    } else {
-      // Nếu chưa có, thêm item mới vào mảng cartItem
-      console.log("Service: Biến thể sản phẩm chưa có trong giỏ, thêm mới."); // Service: Product variant not in cart, adding new.
-      cart.cartItem.push({
-        id_product: product._id, // ObjectId từ product đã fetch
-        name_product: product.name_Product, // Khớp với trường 'name_product' trong schema
-        price: product.price,
-        size: product.size,
-        image: product.image || '', // Lấy ảnh từ product, fallback về chuỗi rỗng
-        quantity: itemData.quantity,
-        status: typeof itemData.status === 'boolean' ? itemData.status : true, // Mặc định là true (đã chọn) cho item mới
-      });
+      // 5. Tìm hoặc tạo giỏ hàng
+      let cart = await Cart.findOne({ userId: userId }).session(session);
+
+      if (!cart) {
+        cart = new Cart({
+          userId: userId,
+          cartItem: [],
+          totalPrice: 0,
+        });
+      }
+
+      // 6. Kiểm tra sản phẩm đã có trong giỏ chưa
+      const existingItemIndex = cart.cartItem.findIndex(
+        (ci) =>
+          ci.id_variant &&
+          ci.id_variant.toString() === itemData.id_variant.toString()
+      );
+
+      if (existingItemIndex > -1) {
+        // Cập nhật số lượng nếu sản phẩm đã có trong giỏ
+        const newQuantity =
+          cart.cartItem[existingItemIndex].quantity + itemData.quantity;
+
+        // // Kiểm tra giới hạn số lượng
+        // if (newQuantity > MAX_QUANTITY_PER_ITEM) {
+        //   const error = new Error(`Không thể thêm quá ${MAX_QUANTITY_PER_ITEM} sản phẩm cùng loại vào giỏ hàng`);
+        //   error.statusCode = 400;
+        //   throw error;
+        // }
+
+        // Kiểm tra tồn kho với số lượng mới
+        if (newQuantity > variantDetails.variant_stock) {
+          const error = new Error(
+            `Tổng số lượng sản phẩm trong giỏ (${newQuantity}) vượt quá số lượng tồn kho (${variantDetails.variant_stock})`
+          );
+          error.statusCode = 400;
+          throw error;
+        }
+
+        cart.cartItem[existingItemIndex].quantity = newQuantity;
+        cart.cartItem[existingItemIndex].price = variantDetails.variant_price; // Cập nhật giá mới nhất
+        cart.cartItem[existingItemIndex].status =
+          typeof itemData.status === "boolean"
+            ? itemData.status
+            : cart.cartItem[existingItemIndex].status;
+      } else {
+        // Thêm sản phẩm mới vào giỏ
+        cart.cartItem.push({
+          id_product: itemData.id_product,
+          name_product: product.product_name,
+          price: product.price,
+          size: product.size,
+          image: image_url,
+          quantity: itemData.quantity,
+          // status: true // Mặc định là true khi thêm mới
+        });
+      }
+
+      // 7. Lưu giỏ hàng
+      const savedCart = await cart.save({ session });
+
+      // 8. Commit transaction
+      await session.commitTransaction();
+
+      console.log("Service: Giỏ hàng đã được lưu thành công:", savedCart);
+      return savedCart;
+    } catch (error) {
+      // Rollback nếu có lỗi
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      // Kết thúc session
+      session.endSession();
     }
-
-    // Hook pre('save') trong CartSchema sẽ tự động gọi recalculateCartSubtotal
-    const savedCart = await cart.save();
-    console.log("Service: Giỏ hàng đã được lưu:", savedCart._id); // Service: Cart has been saved:
-    return savedCart;
-
   } catch (error) {
-    console.error("Service: Lỗi khi thêm/cập nhật giỏ hàng:", error.message); // Service: Error when adding/updating cart:
-    if (error.stack && !error.statusCode) { // Ghi log stack cho các lỗi không mong muốn
-        console.error(error.stack);
-    }
+    console.error(
+      "Service: Lỗi khi thêm/cập nhật giỏ hàng:",
+      error.message,
+      error.stack
+    );
     if (!error.statusCode) {
       error.statusCode = 500;
     }

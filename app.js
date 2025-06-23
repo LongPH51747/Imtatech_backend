@@ -15,7 +15,6 @@ const app = express();
 const db = require('./src/config/db');
 
 var cart = require('./src/module/cart/cart.router')
-var cate = require('./src/module/category/cate.router')
 var product = require('./src/module/product/product.router')
 var order = require('./src/module/order/order.router')
 const swaggerSpec = require('./src/docs/swagger')
@@ -38,7 +37,6 @@ app.use('/api/categories', categoryRouter);
 db.connectDB();
 app.use('/api/product', product)
 app.use('/api/cart', cart)
-app.use('/api/cate', cate)
 app.use('/api/order', order)
 // catch 404 and forward to error handler
 app.use((req, res, next) => {

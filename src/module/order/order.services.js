@@ -1,5 +1,5 @@
 const Order = require("./order.model");
-const Product = require("../producttest/product.model");
+const Product = require("../product/product.model");
 const Cart = require("../cart/cart.model");
 const mongoose = require("mongoose");
 

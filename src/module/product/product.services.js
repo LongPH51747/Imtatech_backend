@@ -19,6 +19,32 @@ exports.create = async (createProduct) => {
   }
 };
 
+exports.createProduct = async (data, { image }) => {
+  // Xử lý ảnh chính
+  const productImagePath = image
+    ? await saveImageToDisk(image.buffer, "product")
+    : null;
+
+  // Gán ảnh chính vào data
+  data.image = productImagePath;
+
+  // Tạo sản phẩm bằng Mongoose
+  const product = await Product.create(data);
+  return product;
+};
+
+const saveImageToDisk = async (buffer, namePrefix) => {
+  const fileName = `${namePrefix}-${Date.now()}.jpg`;
+  const filePath = path.join(
+    __dirname,
+    "../../public/uploads_product",
+    fileName
+  );
+  await sharp(buffer).resize(800).jpeg({ quality: 80 }).toFile(filePath);
+  return `/uploads_product/${fileName}`; // Đường dẫn public
+};
+
+
 exports.getById = async (id) => {
   try {
     const product = await Product.findById(id);

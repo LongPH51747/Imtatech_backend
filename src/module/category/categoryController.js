@@ -1,4 +1,4 @@
-const categoryService = require('../service/categoryService');
+const categoryService = require('./categoryService');
 
 exports.create = async (req, res) => {
     try {
