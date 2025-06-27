@@ -92,20 +92,20 @@ exports.getAllProductsLimit = async (req, res, next) => {
   }
 };
 
-exports.update = async (req, res) => {
-  try {
-    const data = req.body;
-    const { id } = req.params;
-    const updateProduct = await productServices.update(data, id);
-    if (!updateProduct) {
-      res.status(404).json({ message: "Cannot found product" });
-    }
-    return res.status(200).json(updateProduct);
-  } catch (error) {
-    console.log(error);
-    throw error;
-  }
-};
+// exports.update = async (req, res) => {
+//   try {
+//     const data = req.body;
+//     const { id } = req.params;
+//     const updateProduct = await productServices.update(data, id);
+//     if (!updateProduct) {
+//       res.status(404).json({ message: "Cannot found product" });
+//     }
+//     return res.status(200).json(updateProduct);
+//   } catch (error) {
+//     console.log(error);
+//     throw error;
+//   }
+// };
 
 exports.delete = async (req, res) => {
   try {
@@ -158,3 +158,20 @@ exports.updateStatusToFalse = async (req, res) => {
     throw error;
   }
 };
+
+exports.updateProduct = async(req,res,next) =>{
+    try {
+        const id = req.params.id
+        console.log('Update product ID:', id);
+        const data = req.body
+        const file = req.file || null; // Ảnh sản phẩm nếu có (từ form-data)
+        const result = await productService.updateProduct(id,data, file)
+        if (!result) {
+            throw new Error('Loi cap nhat san pham')
+        }
+        res.status(200).json(result)
+    } catch (error) {
+        next(error)
+    }
+}
+

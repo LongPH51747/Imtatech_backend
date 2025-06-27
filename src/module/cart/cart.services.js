@@ -48,7 +48,7 @@ exports.addItemToCart = async (userId, itemData) => {
         throw error;
       }
 
-      if (!product.product_status) {
+      if (!product.status) {
         const error = new Error("Sản phẩm này hiện không còn kinh doanh.");
         error.statusCode = 400;
         throw error;
@@ -66,7 +66,7 @@ exports.addItemToCart = async (userId, itemData) => {
       // 4. Kiểm tra tồn kho
       if (product.stock < itemData.quantity) {
         const error = new Error(
-          `Sản phẩm "${product.product_name}" -  Size ${product.size} chỉ còn ${product.stock} sản phẩm trong kho.`
+          `Sản phẩm "${product.name_Product}" -  Size ${product.size} chỉ còn ${product.stock} sản phẩm trong kho.`
         );
         error.statusCode = 400;
         throw error;
@@ -86,8 +86,8 @@ exports.addItemToCart = async (userId, itemData) => {
       // 6. Kiểm tra sản phẩm đã có trong giỏ chưa
       const existingItemIndex = cart.cartItem.findIndex(
         (ci) =>
-          ci.id_variant &&
-          ci.id_variant.toString() === itemData.id_variant.toString()
+          ci.id_product &&
+          ci.id_product.toString() === itemData.id_product.toString()
       );
 
       if (existingItemIndex > -1) {
@@ -103,16 +103,16 @@ exports.addItemToCart = async (userId, itemData) => {
         // }
 
         // Kiểm tra tồn kho với số lượng mới
-        if (newQuantity > variantDetails.variant_stock) {
+        if (newQuantity > product.stock) {
           const error = new Error(
-            `Tổng số lượng sản phẩm trong giỏ (${newQuantity}) vượt quá số lượng tồn kho (${variantDetails.variant_stock})`
+            `Tổng số lượng sản phẩm trong giỏ (${newQuantity}) vượt quá số lượng tồn kho (${product.stock})`
           );
           error.statusCode = 400;
           throw error;
         }
 
         cart.cartItem[existingItemIndex].quantity = newQuantity;
-        cart.cartItem[existingItemIndex].price = variantDetails.variant_price; // Cập nhật giá mới nhất
+        cart.cartItem[existingItemIndex].price = product.price; // Cập nhật giá mới nhất
         cart.cartItem[existingItemIndex].status =
           typeof itemData.status === "boolean"
             ? itemData.status
@@ -121,7 +121,7 @@ exports.addItemToCart = async (userId, itemData) => {
         // Thêm sản phẩm mới vào giỏ
         cart.cartItem.push({
           id_product: itemData.id_product,
-          name_product: product.product_name,
+          name_product: product.name_Product,
           price: product.price,
           size: product.size,
           image: image_url,

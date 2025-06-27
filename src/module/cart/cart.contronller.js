@@ -3,16 +3,14 @@ const cartService = require("./cart.services");
 exports.addToCart = async (req, res) => {
   try {
     const dataCart = req.body;
-    const userId = dataCart.userId
-    const itemData = dataCart.cartItem
+    const userId = req.params.userId;
+    const itemData = dataCart.cartItem;
     const addToCart = await cartService.addItemToCart(userId, itemData);
     if (!dataCart) {
       return res.status(404).json({ message: "Cannot found cart" });
     }
 
-    return res
-      .status(200)
-      .json(addToCart );
+    return res.status(200).json(addToCart);
   } catch (error) {
     res.status(500).json({ message: "Failed to add cart" });
   }
@@ -20,33 +18,37 @@ exports.addToCart = async (req, res) => {
 
 exports.updateStatusToFalse = async (req, res) => {
   try {
-    const {id} = req.params
-    const statusFalse = await cartService.updateStatusToFalse(id)
+    const { id } = req.params;
+    const statusFalse = await cartService.updateStatusToFalse(id);
     if (!statusFalse) {
-      return res.status(404).json({message: "Cannot found to cart item"})
+      return res.status(404).json({ message: "Cannot found to cart item" });
     }
 
-    return res.status(200).json(statusFalse)
+    return res.status(200).json(statusFalse);
   } catch (error) {
     console.log(error);
-    res.status(500).json({message: "Failed to update status to false", error: error})
+    res
+      .status(500)
+      .json({ message: "Failed to update status to false", error: error });
   }
-}
+};
 
 exports.updateStatusToTrue = async (req, res) => {
   try {
-    const {id_cartItem} = req.params
-    const statusTrue = await cartService.updateStatusToTrue(id_cartItem)
+    const { id_cartItem } = req.params;
+    const statusTrue = await cartService.updateStatusToTrue(id_cartItem);
     if (!statusTrue) {
-      return res.status(404).json({message: "Cannot found to cart item"})
+      return res.status(404).json({ message: "Cannot found to cart item" });
     }
 
-    return res.status(200).json(statusTrue)
+    return res.status(200).json(statusTrue);
   } catch (error) {
     console.log(error);
-    res.status(500).json({message: "Failed to update status to false", error: error})
+    res
+      .status(500)
+      .json({ message: "Failed to update status to false", error: error });
   }
-}
+};
 
 exports.removeCartItem = async (req, res) => {
   try {
@@ -63,44 +65,51 @@ exports.removeCartItem = async (req, res) => {
     );
 
     if (removeCartItem === 0) {
-      return res.status(404).json({ message: "Không tìm thấy giỏ hàng cho người dùng này." });
-    }
-    else if (removeCartItem === 1) {
-      return res.status(404).json({message: "Không tìm thấy mục này trong giỏ hàng."})
+      return res
+        .status(404)
+        .json({ message: "Không tìm thấy giỏ hàng cho người dùng này." });
+    } else if (removeCartItem === 1) {
+      return res
+        .status(404)
+        .json({ message: "Không tìm thấy mục này trong giỏ hàng." });
     }
 
-    return res
-      .status(200)
-      .json(removeCartItem );
+    return res.status(200).json(removeCartItem);
   } catch (error) {
     res.status(500).json({ message: "Failed to remove cart item" });
   }
 };
 
-exports.updateCartItemQuantity = async(req, res) => {
+exports.updateCartItemQuantity = async (req, res) => {
   try {
-    const cartItemData = req.body
+    const cartItemData = req.body;
     console.log(cartItemData);
-    
-    const {id} = req.params
+
+    const { id } = req.params;
     console.log(id);
-    
-    const newQuantity = cartItemData.newQuantity
+
+    const newQuantity = cartItemData.newQuantity;
     console.log(newQuantity);
-    
-    const userId = cartItemData.userId
+
+    const userId = cartItemData.userId;
     console.log(userId);
-    
-    const updateQuantity = await cartService.updateCartItemQuantity(newQuantity, id, userId)
+
+    const updateQuantity = await cartService.updateCartItemQuantity(
+      newQuantity,
+      id,
+      userId
+    );
     if (!updateQuantity) {
-      return res.status(404).json({message: "Cannot found cart item"})
+      return res.status(404).json({ message: "Cannot found cart item" });
     }
 
-    return res.status(200).json(updateQuantity)
+    return res.status(200).json(updateQuantity);
   } catch (error) {
-    res.status(500).json({message: "Failed to update quantity from cart item"})
+    res
+      .status(500)
+      .json({ message: "Failed to update quantity from cart item" });
   }
-}
+};
 
 exports.getByUserId = async (req, res) => {
   try {

@@ -27,7 +27,7 @@ exports.create = async (orderData, userId) => {
   //   id_address: "...",
   //   payment_method: "..."
   // }
-  const { orderItems, id_cart, id_address, shipping, payment_method } = orderData;
+  const { orderItems, id_cart, id_address, shipping } = orderData;
 
   // ----- VALIDATION ĐẦU VÀO -----
   if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
@@ -41,13 +41,6 @@ exports.create = async (orderData, userId) => {
       400,
       "Danh sách sản phẩm đặt hàng (orderItems) không được để trống."
     );
-  }
-  if (!payment_method) {
-    throw createError(400, "Phương thức thanh toán là bắt buộc.");
-  }
-  const VALID_PAYMENT_METHODS = ['COD', 'BANKING', 'MOMO']; // thêm các phương thức khác nếu có
-  if (!payment_method || !VALID_PAYMENT_METHODS.includes(payment_method)) {
-    throw createError(400, "Phương thức thanh toán không hợp lệ.");
   }
   // ----- KẾT THÚC VALIDATION -----
 
@@ -72,24 +65,13 @@ exports.create = async (orderData, userId) => {
         );
       }
       if (
-        !item.id_variant ||
-        !mongoose.Types.ObjectId.isValid(item.id_variant)
-      ) {
-        throw createError(
-          400,
-          `ID biến thể (id_variant) không hợp lệ cho item: ${JSON.stringify(
-            item
-          )}`
-        );
-      }
-      if (
         typeof item.quantity !== "number" ||
         item.quantity <= 0 ||
         !Number.isInteger(item.quantity)
       ) {
         throw createError(
           400,
-          `Số lượng không hợp lệ cho biến thể ID: ${item.id_variant}`
+          `Số lượng không hợp lệ cho biến thể ID: ${item.id_product}`
         );
       }
 
@@ -105,59 +87,60 @@ exports.create = async (orderData, userId) => {
             `Không tìm thấy sản phẩm với ID: ${item.id_product}`
           );
         }
-        if (!productDoc.product_status) {
-          throw createError(400, `Sản phẩm "${productDoc.product_name}" hiện không còn kinh doanh.`);
+        if (!productDoc.status) {
+          throw createError(
+            400,
+            `Sản phẩm "${productDoc.name_Product}" hiện không còn kinh doanh.`
+          );
         }
         productsToUpdateStock.set(item.id_product.toString(), productDoc); // Lưu instance để tái sử dụng và cập nhật
       }
 
-      // 2. Tìm variant con bên trong Product bằng _id của variant
-      const variantInProduct = productDoc.variant.id(item.id_variant);
-      if (!variantInProduct) {
-        throw createError(
-          404,
-          `Không tìm thấy biến thể với ID: ${item.id_variant} trong sản phẩm "${productDoc.name_Product}"`
-        );
-      }
-
       // 3. Kiểm tra tồn kho
-      if (variantInProduct.variant_stock < item.quantity) {
+      if (productDoc.stock < item.quantity) {
         throw createError(
           400,
-          `Sản phẩm "${productDoc.name_Product} - ${variantInProduct.variant_color} - ${variantInProduct.variant_size}" không đủ số lượng tồn kho (Còn: ${variantInProduct.variant_stock}, Đặt: ${item.quantity}).`
+          `Sản phẩm "${productDoc.name_Product} - ${productDoc.size}" không đủ số lượng tồn kho (Còn: ${productDoc.stock}, Đặt: ${item.quantity}).`
         );
       }
 
       // 4. Tính toán giá cho item này
-      const itemTotalPrice = variantInProduct.variant_price * item.quantity;
+      const itemTotalPrice = productDoc.price * item.quantity;
+      let image_url = "";
 
+      if (Buffer.isBuffer(productDoc.image)) {
+        const base64 = productDoc.iimageamge.toString("base64");
+        const type = productDoc.image || "image/png";
+        image_url = `data:${type};base64,${base64}`;
+      } else if (typeof productDoc.image === "string") {
+        image_url = productDoc.image;
+      }
       processedOrderItemsForSchema.push({
-        id_variant: variantInProduct._id,
+        id_product: productDoc._id,
         name_product: productDoc.name_Product,
-        color: variantInProduct.variant_color, // Lấy từ schema Product của bạn
-        size: variantInProduct.variant_size, // Lấy từ schema Product của bạn
+        size: productDoc.size, // Lấy từ schema Product của bạn
         quantity: item.quantity,
-        unit_price: variantInProduct.variant_price,
+        unit_price_item: productDoc.price,
         total_price_item: itemTotalPrice,
-        image: variantInProduct.variant_image,
+        image: image_url,
       });
 
       subTotalAmountForOrder += itemTotalPrice;
 
       // 5. Trừ tồn kho trực tiếp trên sub-document variant CỦA INSTANCE productDoc
-      variantInProduct.variant_stock -= item.quantity;
+      productDoc.stock -= item.quantity;
       console.log(
-        `Đã trừ stock cho variant ${variantInProduct._id}, stock mới: ${variantInProduct.variant_stock}`
+        `Đã trừ stock cho variant ${productDoc._id}, stock mới: ${productDoc.stock}`
       );
       // Đánh dấu mảng variants là đã bị sửa đổi trên productDoc này
-      productDoc.markModified("variant");
+      productDoc.markModified("product");
     }
 
     // 6. Lưu tất cả các Product đã bị thay đổi tồn kho
     for (const productDocToSave of productsToUpdateStock.values()) {
       console.log(
-        `Chuẩn bị lưu Product ID: ${productDocToSave._id} với variants:`,
-        JSON.stringify(productDocToSave.variants, null, 2)
+        `Chuẩn bị lưu Product ID: ${productDocToSave._id}:`,
+        JSON.stringify(productDocToSave, null, 2)
       );
       await productDocToSave.save({ session });
       console.log(`Đã lưu Product ID: ${productDocToSave._id}`);
@@ -166,12 +149,12 @@ exports.create = async (orderData, userId) => {
     // 7. Tính toán tổng tiền cuối cùng
     let actualShipping;
     if (shipping !== undefined) {
-      if (typeof shipping !== 'number' || shipping < 0) {
+      if (typeof shipping !== "number" || shipping < 0) {
         throw createError(400, "Phí vận chuyển không hợp lệ");
       }
       actualShipping = shipping;
     } else {
-      actualShipping = Order.schema.path('shipping').defaultValue;
+      actualShipping = Order.schema.path("shipping").defaultValue;
     }
 
     const finalTotalAmount = subTotalAmountForOrder + actualShipping;
@@ -181,17 +164,17 @@ exports.create = async (orderData, userId) => {
       userId: userId,
       orderItems: processedOrderItemsForSchema,
       id_address: id_address,
-    //   shipping: shipping || 0, // Giữ tên 'shipping' nếu OrderSchema của bạn là vậy
-      payment_method: payment_method || "COD",
+      //   shipping: shipping || 0, // Giữ tên 'shipping' nếu OrderSchema của bạn là vậy
+      // payment_method: payment_method || "COD",
       sub_total_amount: subTotalAmountForOrder,
       total_amount: finalTotalAmount,
     };
 
     if (shipping !== undefined) {
-        newOrderData.shipping = shipping
+      newOrderData.shipping = shipping;
     }
 
-    const newOrder = new Order(newOrderData)
+    const newOrder = new Order(newOrderData);
     const savedOrder = await newOrder.save({ session });
 
     // 9. (TÙY CHỌN) Xóa item khỏi giỏ hàng
@@ -204,12 +187,12 @@ exports.create = async (orderData, userId) => {
         throw createError(403, "Bạn không có quyền truy cập giỏ hàng này");
       }
       const orderedVariantIdsInOrder = orderItems.map((item) =>
-        item.id_variant.toString()
+        item.id_product.toString()
       );
       userCart.cartItem = userCart.cartItem.filter(
         (cartItemInCart) =>
           !orderedVariantIdsInOrder.includes(
-            cartItemInCart.id_variant.toString()
+            cartItemInCart.id_product.toString()
           )
       );
       await userCart.save({ session }); // Hook pre-save của Cart sẽ tính lại totalPrice của Cart
@@ -255,7 +238,7 @@ exports.create = async (orderData, userId) => {
 //     console.log(orderItem);
 //     const id_Cart = orderItem.id_Cart;
 //     if (id_Cart) {
-    
+
 //     }
 
 //     for (const item of orderItem) {
@@ -330,8 +313,8 @@ exports.getOrdersByUser = async (userId) => {
 
     const orders = await Order.find({ userId })
       .sort({ createdAt: -1 })
-      .populate('id_address');
-    
+      .populate("id_address");
+
     return orders;
   } catch (error) {
     console.error("Service: Lỗi khi lấy danh sách đơn hàng:", error);
@@ -349,8 +332,8 @@ exports.getOrderById = async (orderId) => {
       throw createError(400, "ID đơn hàng không hợp lệ");
     }
 
-    const order = await Order.findById(orderId).populate('id_address');
-    
+    const order = await Order.findById(orderId).populate("id_address");
+
     if (!order) {
       throw createError(404, "Không tìm thấy đơn hàng");
     }
@@ -368,7 +351,7 @@ exports.getOrderById = async (orderId) => {
 // // Cập nhật trạng thái đơn hàng
 // exports.updateOrderStatus = async (orderId, newStatus, userId) => {
 //   try {
-    
+
 //     if (!mongoose.Types.ObjectId.isValid(orderId)) {
 //       throw createError(400, "ID đơn hàng không hợp lệ");
 //     }
@@ -419,37 +402,36 @@ exports.cancelOrder = async (orderId, userId) => {
       throw createError(403, "Bạn không có quyền hủy đơn hàng này");
     }
 
-    if (order.status === 'delivered') {
+    if (order.status === "delivered") {
       throw createError(400, "Không thể hủy đơn hàng đã giao thành công");
     }
 
-    if (order.status === 'cancelled') {
+    if (order.status === "cancelled") {
       throw createError(400, "Đơn hàng đã được hủy trước đó");
     }
 
     // Hoàn lại số lượng tồn kho
     for (const item of order.orderItems) {
       const product = await Product.findOne({
-        'variant._id': item.id_variant
+        "variant._id": item.id_variant,
       }).session(session);
 
       if (product) {
         const variant = product.variant.id(item.id_variant);
         if (variant) {
           variant.variant_stock += item.quantity;
-          product.markModified('variant');
+          product.markModified("variant");
           await product.save({ session });
         }
       }
     }
 
-    order.status = 'cancelled';
+    order.status = "cancelled";
     order.cancelledAt = new Date();
     const cancelledOrder = await order.save({ session });
 
     await session.commitTransaction();
     return cancelledOrder;
-
   } catch (error) {
     await session.abortTransaction();
     console.error("Service: Lỗi khi hủy đơn hàng:", error);

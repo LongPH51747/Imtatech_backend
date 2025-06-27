@@ -8,7 +8,7 @@ const swaggerUi = require('swagger-ui-express');
 var logger = require('morgan');
 
 const indexRouter = require('./routes/index');
-const userRouter = require('./src/module/user/user.router');
+var userRouter = require('./src/module/user/user.router');
 const categoryRouter = require('./src/module/category/category.router');
 
 const app = express();
@@ -18,6 +18,7 @@ var cart = require('./src/module/cart/cart.router')
 var product = require('./src/module/product/product.router')
 var order = require('./src/module/order/order.router')
 const swaggerSpec = require('./src/docs/swagger')
+var plantaAPI = require('./src/module/planta_id/planta_api.router')
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
@@ -34,16 +35,22 @@ app.use('/api/users', userRouter);
 app.use('/api/categories', categoryRouter);
 
 // DB connection
+
+app.use(cors({
+  allowedHeaders: ['Content-Type', 'Authorization', 'ngrok-skip-browser-warning'], 
+}));
 db.connectDB();
-app.use('/api/product', product)
+app.use('/api/products', product)
 app.use('/api/cart', cart)
 app.use('/api/order', order)
+app.use('/api', plantaAPI)
 // catch 404 and forward to error handler
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); // Cung cap API docs
+
 app.use((req, res, next) => {
   next(createError(404));
 });
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); // Cung cap API docs
-// error handler
+// error handler  
 app.use((err, req, res, next) => {
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};

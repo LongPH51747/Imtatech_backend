@@ -53,3 +53,33 @@ const UserSchema = new mongoose.Schema({
 });
 
 module.exports = mongoose.model('User', UserSchema);
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     User:
+ *       type: object
+ *       properties:
+ *         _id:
+ *           type: string
+ *           example: "60f7c0b8e1b1c8a1b8e1b1c8"
+ *         username:
+ *           type: string
+ *           example: "nguyenvana"
+ *         email:
+ *           type: string
+ *           example: "nguyenvana@gmail.com"
+ *         password:
+ *           type: string
+ *           example: "hashed_password"
+ *         role:
+ *           type: string
+ *           example: "user"
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ */

@@ -48,7 +48,7 @@ module.exports = mongoose.model("order", OrderSchema);
  *       type: object
  *       required:
  *         - id_address
- *         - id_variant
+ *         - id_product
  *         - userId
  *       properties:
  *         _id:
@@ -61,11 +61,9 @@ module.exports = mongoose.model("order", OrderSchema);
  *           items:
  *             type: object
  *             properties:
- *               id_variant:
+ *               id_product:
  *                 type: string
  *               name_product: 
- *                 type: String
- *               color:
  *                 type: String
  *               size:
  *                 type: String

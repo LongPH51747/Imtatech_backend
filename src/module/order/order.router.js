@@ -39,10 +39,17 @@ module.exports = router;
 
 /**
  * @swagger
- * /api/order/create/{userId}:
+ * /api/order/create/userId/{id}:
  *   post:
  *     summary: Tạo order
  *     tags: [Order]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID người dùng
  *     requestBody:
  *       required: true
  *       content:
@@ -57,16 +64,15 @@ module.exports = router;
  *                   required: 
  *                     - id_product
  *                     - id_address
- *                     - id_variant
  *                   properties:
  *                     id_product:
  *                       type: string
  *                       format: ObjectId
- *                     id_variant:
- *                       type: string
- *                       format: ObjectId
  *                     quantity:
  *                       type: number
+ *               id_cart: 
+ *                 type: string
+ *                 format: ObjectId
  *               id_address: 
  *                 type: string
  *                 format: ObjectId

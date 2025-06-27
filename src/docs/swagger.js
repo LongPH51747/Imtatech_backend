@@ -4,7 +4,7 @@ const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'S7M Backend API',
+      title: 'Planta Backend API',
       version: '1.0.0',
       description: 'Anh em mình cứ thế thôi hẹ hẹ hẹ hẹ.......',
     },
@@ -24,11 +24,11 @@ const swaggerOptions = {
     ],
     servers: [
       {
-        url: 'http://192.168.1.209:5000',
+        url: 'https://237c-2405-4802-1f1-bb30-50e4-dcbd-8208-20df.ngrok-free.app',
       },
     ],
   },
-  apis: ['./src/modules/**/*.js'], // sửa đúng path đến router nếu cần
+  apis: ['./src/module/**/*.js'], // sửa đúng path đến router nếu cần
 };
 const swaggerSpec = swaggerJSDoc(swaggerOptions)
 

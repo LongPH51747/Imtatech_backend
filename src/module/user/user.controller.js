@@ -46,3 +46,17 @@ exports.deleteProfile = async (req, res) => {
         res.status(400).json({ error: err.message });
     }
 };
+
+
+exports.getAllUser = async (req, res,next) => {
+  try {
+    const getAll = await userService.getAllUser(next)
+    if (!getAll) {
+        return res.status(404).json({message: "Cannot found user"})
+    }
+
+    return res.status(200).json(getAll)
+  } catch (error) {
+    res.status(500).json({message: "Failed to get all user"})
+  }
+};

@@ -54,7 +54,7 @@ exports.getById = async (id) => {
   }
 };
 
-exports.get = async (id) => {
+exports.get = async () => {
   try {
     const product = await Product.find();
     return product;
@@ -80,24 +80,24 @@ exports.getAllProductsLimit = async (page, limit) => {
   };
 };
 
-exports.update = async (data, id) => {
-  try {
-    const updateProduct = await Product.findById(id);
-    if (!updateProduct) {
-      return;
-    }
-    updateProduct.name_Product = data.name_Product;
-    updateProduct.price = data.price;
-    updateProduct.size = data.size;
-    updateProduct.stock = data.stock;
-    updateProduct.origin = data.origin;
-    updateProduct.attribute = data.attribute;
-    updateProduct.image = data.image;
-    updateProduct.id_cate = data.id_cate;
-    const saveProduct = await updateProduct.save();
-    return saveProduct;
-  } catch (error) {}
-};
+// exports.update = async (data, id) => {
+//   try {
+//     const updateProduct = await Product.findById(id);
+//     if (!updateProduct) {
+//       return;
+//     }
+//     updateProduct.name_Product = data.name_Product;
+//     updateProduct.price = data.price;
+//     updateProduct.size = data.size;
+//     updateProduct.stock = data.stock;
+//     updateProduct.origin = data.origin;
+//     updateProduct.attribute = data.attribute;
+//     updateProduct.image = data.image;
+//     updateProduct.id_cate = data.id_cate;
+//     const saveProduct = await updateProduct.save();
+//     return saveProduct;
+//   } catch (error) {}
+// };
 
 exports.delete = async (id) => {
   try {
@@ -158,4 +158,44 @@ exports.updateStatusToFalse = async (id) => {
     error.statusCode = 500;
     throw error;
   }
+};
+
+
+// Cap nhat toan bo san pham
+exports.updateProduct = async (id, data, file = null) => {
+  const {
+    name_Product,
+    price,
+    id_cate,
+    size,
+    color,
+    stock,
+    origin,
+    attribute,
+    status,
+    image, // Trường hợp truyền file ảnh
+  } = data;
+
+  const product = await this.getById(id);
+  if (!product) throw new Error("Không tồn tại sản phẩm này");
+
+  if (name_Product) product.name_Product = name_Product;
+  if (price) product.price = price;
+  if (id_cate) product.id_cate = id_cate;
+  if (size) product.size = size;
+  if (color) product.color = color;
+  if (origin) product.origin = origin;
+  if (attribute) product.attribute = attribute;
+  if (status) product.status = status;
+  if (image) product.image = image;
+
+  if (file?.buffer) {
+    const filePath = await saveImageToDisk(
+      file.buffer,
+      `product-${product._id}`
+    );
+    product.image = filePath; // Cập nhật đường dẫn ảnh mới
+  }
+
+  return await product.save();
 };
