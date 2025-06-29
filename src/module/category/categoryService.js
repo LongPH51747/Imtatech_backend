@@ -1,7 +1,10 @@
 const Category = require('../category/category.model');
 
 exports.create = async (data) => {
-    return await Category.create(data);
+    const newCate = new Category({
+        name: data.name
+    })
+    return await newCate.save();
 };
 
 exports.getAll = async () => {

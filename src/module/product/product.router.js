@@ -1,18 +1,19 @@
 const express = require("express");
 const router = express.Router();
 const productContronller = require("./product.contronller");
-const upload = require('../../../middleware/upload-product.middleware')
+const upload = require("../../../middleware/upload-product.middleware");
 
 router.post("/create", async (req, res) => {
   await productContronller.create(req, res);
 });
 
-router.post('/create-product', upload.fields([
-    {
-        name: 'product_image', // Ảnh chính của sản phẩm
-        maxCount: 1 // Chỉ cho phép 1 ảnh chính
-    },
-]),productContronller.createProduct)
+router.post(
+  "/create-product",
+  upload.single(
+    "image" // Ảnh chính của sản phẩm
+  ),
+  productContronller.createProduct
+);
 
 router.get("/get-all-products", async (req, res) => {
   await productContronller.get(req, res);
@@ -22,21 +23,22 @@ router.get("/getById/:id", async (req, res) => {
   await productContronller.getById(req, res);
 });
 
-router.get('/get-all-products-limit', productContronller.getAllProductsLimit)
+router.get("/get-all-products-limit", productContronller.getAllProductsLimit);
 
+router.patch("/updateStatusToTrue/:id", productContronller.updateStatusToTrue);
 
-router.patch('/updateStatusToTrue/:id', productContronller.updateStatusToTrue)
+router.patch(
+  "/updateStatusToFalse/:id",
+  productContronller.updateStatusToFalse
+);
 
-router.patch('/updateStatusToFalse/:id', productContronller.updateStatusToFalse)
+router.delete("/delete/:id", productContronller.delete);
 
-router.delete('/delete/:id', productContronller.delete)
+router.get("/search-product", productContronller.searchProduct);
 
-router.get('/search-product', productContronller.searchProduct)
-
-router.put('/update-product-by-id/:id', productContronller.updateProduct)
+router.put("/update-product-by-id/:id", productContronller.updateProduct);
 
 module.exports = router;
-
 
 /**
  * @swagger
@@ -67,11 +69,14 @@ module.exports = router;
  *                     "price": 120000,
  *                     "size": "Small",
  *                     "stock": 1000,
- *                     "id_cate": "684178da78a1c4d774bd5784",
+ *                     "id_cate": "685eab219a14a3dfe8333e6b",
  *                     "origin": "Châu phi",
- *                     "attribute": "Ư bóng",
- *                     "image": ""
+ *                     "attribute": "Ưa bóng",
  *                   }
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *                 description: Ảnh chính của sản phẩm (đại diện)
  *     responses:
  *       201:
  *         description: Tạo sản phẩm thành công

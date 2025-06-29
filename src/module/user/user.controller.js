@@ -50,7 +50,7 @@ exports.deleteProfile = async (req, res) => {
 
 exports.getAllUser = async (req, res,next) => {
   try {
-    const getAll = await userService.getAllUser(next)
+    const getAll = await userService.getAllUser()
     if (!getAll) {
         return res.status(404).json({message: "Cannot found user"})
     }
@@ -60,3 +60,32 @@ exports.getAllUser = async (req, res,next) => {
     res.status(500).json({message: "Failed to get all user"})
   }
 };
+
+exports.updateStatusUser = async(req, res, next) =>{
+    try {
+        const id = req.params.id
+        const { is_allowed } = req.body
+        console.log("id:",id);
+        const updatedUser = await userService.updateStatusUser(id, is_allowed)
+        res.status(200).json({
+            message: 'Cập nhật trạng thái thành công',
+            data: updatedUser
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
+exports.deleteUser = async ( req, res, next ) =>{
+    try {
+        const _id = req.params.id
+        const deleteUser = await userService.deleteUser(_id)
+        if (!deleteUser) {
+            return res.status(404).json({ message: 'User not found' })
+        }
+
+        res.status(200).json({ message: 'User deleted successfully' }) // Tra ve thong bao xoa thanh cong
+    } catch (error) {
+        next(error)
+    }
+}

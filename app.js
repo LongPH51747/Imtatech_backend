@@ -18,6 +18,7 @@ var cart = require('./src/module/cart/cart.router')
 var product = require('./src/module/product/product.router')
 var order = require('./src/module/order/order.router')
 const swaggerSpec = require('./src/docs/swagger')
+var statistics = require('./src/module/statistics/statistics.router')
 var plantaAPI = require('./src/module/planta_id/planta_api.router')
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -25,25 +26,28 @@ app.set('view engine', 'hbs');
 
 app.use(logger('dev'));
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: true, limit: '20mb'}));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads_product', express.static(path.join(__dirname, './src/public/uploads_product')))
 
 // ROUTES
-app.use('/', indexRouter);
-app.use('/api/users', userRouter);
-app.use('/api/categories', categoryRouter);
 
 // DB connection
 
 app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'ngrok-skip-browser-warning'], 
 }));
+
 db.connectDB();
+app.use('/', indexRouter);
+app.use('/api/users', userRouter);
+app.use('/api/categories', categoryRouter);
 app.use('/api/products', product)
 app.use('/api/cart', cart)
 app.use('/api/order', order)
-app.use('/api', plantaAPI)
+app.use('/api/plant', plantaAPI)
+app.use('/api/statistics', statistics)
 // catch 404 and forward to error handler
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); // Cung cap API docs
 

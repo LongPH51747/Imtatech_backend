@@ -1,4 +1,6 @@
 const Product = require("./product.model");
+const path = require("path");
+const sharp = require("sharp");
 
 exports.create = async (createProduct) => {
   try {
@@ -21,11 +23,16 @@ exports.create = async (createProduct) => {
 
 exports.createProduct = async (data, { image }) => {
   // Xử lý ảnh chính
+  console.log("image 2", image);
+  console.log("image buffer", image?.buffer);
+  
   const productImagePath = image
-    ? await saveImageToDisk(image.buffer, "product")
+    ? await saveImageToDisk(image?.buffer, "product")
     : null;
 
   // Gán ảnh chính vào data
+  console.log("productImagePath", productImagePath);
+  
   data.image = productImagePath;
 
   // Tạo sản phẩm bằng Mongoose
@@ -43,7 +50,6 @@ const saveImageToDisk = async (buffer, namePrefix) => {
   await sharp(buffer).resize(800).jpeg({ quality: 80 }).toFile(filePath);
   return `/uploads_product/${fileName}`; // Đường dẫn public
 };
-
 
 exports.getById = async (id) => {
   try {
@@ -69,14 +75,14 @@ exports.getAllProductsLimit = async (page, limit) => {
   const products = await Product.find()
     .skip(skip)
     .limit(limit)
-    .populate('id_cate')
+    .populate("id_cate")
     .exec();
 
   const total = await Product.countDocuments();
 
   return {
     products,
-    total
+    total,
   };
 };
 
@@ -159,7 +165,6 @@ exports.updateStatusToFalse = async (id) => {
     throw error;
   }
 };
-
 
 // Cap nhat toan bo san pham
 exports.updateProduct = async (id, data, file = null) => {

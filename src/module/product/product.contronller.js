@@ -20,22 +20,22 @@ exports.createProduct = async (req, res, next) => {
   try {
     const data = JSON.parse(req.body.data); // Dữ liệu sản phẩm
     console.log("Data received:", data);
-    console.log("Files received:", req.files);
+    console.log("Files received:", req.file);
 
-    const product_image = req.files?.["image"]?.[0] || null; // Ảnh chính của sản phẩm
+    const image = req.file; // Ảnh chính của sản phẩm
 
-    if (!product_image) {
+    if (!image) {
       return res.status(400).json({
         message: "Ảnh chính của sản phẩm là bắt buộc",
       });
     }
-    const reuslt = await productService.createProduct(data, {
-      product_image,
-    });
+    console.log("product_image", image);
+
+    const reuslt = await productServices.createProduct(data, { image });
 
     res.status(200).json(reuslt);
   } catch (error) {
-    next(error);
+    res.status(500).json({ message: "Failed to create" });
   }
 };
 
@@ -159,19 +159,18 @@ exports.updateStatusToFalse = async (req, res) => {
   }
 };
 
-exports.updateProduct = async(req,res,next) =>{
-    try {
-        const id = req.params.id
-        console.log('Update product ID:', id);
-        const data = req.body
-        const file = req.file || null; // Ảnh sản phẩm nếu có (từ form-data)
-        const result = await productService.updateProduct(id,data, file)
-        if (!result) {
-            throw new Error('Loi cap nhat san pham')
-        }
-        res.status(200).json(result)
-    } catch (error) {
-        next(error)
+exports.updateProduct = async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    console.log("Update product ID:", id);
+    const data = req.body;
+    const file = req.file || null; // Ảnh sản phẩm nếu có (từ form-data)
+    const result = await productService.updateProduct(id, data, file);
+    if (!result) {
+      throw new Error("Loi cap nhat san pham");
     }
-}
-
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};

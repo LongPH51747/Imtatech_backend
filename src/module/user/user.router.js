@@ -14,6 +14,8 @@ router.post("/login", userController.login);
 router.get("/profile", authMiddleware, userController.getProfile);
 router.put("/profile", authMiddleware, userController.updateProfile);
 router.delete("/profile", authMiddleware, userController.deleteProfile);
+router.patch("/update-status-user/:id", userController.updateStatusUser); // Cap nhat trang thai user
+router.delete("/delete-by-id/:id", userController.deleteUser); // Xoa user theo ID
 
 module.exports = router;
 
@@ -178,4 +180,53 @@ module.exports = router;
  *                   type: string
  *       400:
  *         description: Lỗi xác thực hoặc không tìm thấy user
+ */
+
+/**
+ * @swagger
+ * /api/users/update-status-user/{id}:
+ *   patch:
+ *     summary: Cập nhật trạng thái sản người dùng (còn phép truy cập / không cho phép truy cập)
+ *     tags: [User]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID người dùng
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - is_allowed
+ *             properties:
+ *               is_allowed:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Cập nhật trạng thái thành công
+ *       404:
+ *         description: Không tìm thấy người dùng
+ */
+
+/**
+ * @swagger
+ * /api/users/delete-by-id/id/{id}:
+ *   delete:
+ *     summary: Xoá người dùng theo ID
+ *     tags: [User]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID người dùng
+ *     responses:
+ *       200:
+ *         description: Xoá thành công
  */
