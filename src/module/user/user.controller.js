@@ -47,6 +47,14 @@ exports.deleteProfile = async (req, res) => {
     }
 };
 
+exports.loginAdmin = async (req, res) => {
+    try {
+        const { token, user } = await userService.loginAdmin(req.body);
+        res.status(200).json({ message: 'Đăng nhập admin thành công', token, user });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+};
 
 exports.getAllUser = async (req, res,next) => {
   try {
