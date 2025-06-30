@@ -62,60 +62,119 @@ async function handleIdentifyPlant(req, res) {
 }
 
 const handleCreateIdentification = async (req, res) => {
-   if (!req.file) {
+  if (!req.file) {
     return res
-      .status(400)
-      .json({ error: "Không có file ảnh nào được tải lên." });
+      .status(200)
+      .json({
+        message:
+          "Tôi đang không biết bạn hỏi về loài cây gì?\nVui lòng gửi cho tôi 1 ảnh về loài cây mà bạn đang cần thắc mắc!",
+      });
   }
   try {
     const imageBase64 = req.file.buffer.toString("base64");
     console.log("Controller: Nhận yêu cầu tạo phiên nhận dạng...");
     const result = await plantService.createIdentification(imageBase64);
     const identificationData = result.data;
-    const suggestions =
-      result.data.result.classification.suggestions;
+    const suggestions = result.data.result.classification.suggestions;
+
+    // 1. Kiểm tra xem có gợi ý nào không
     if (!suggestions || suggestions.length === 0) {
-      return res.status(200).json({
-        message:
-          "Nhận dạng thành công nhưng không tìm thấy loài cây nào phù hợp.",
+      return res.status(404).json({
+        // Nên dùng 404 Not Found
+        message: "Không nhận dạng được cây nào từ hình ảnh.",
       });
     }
-    // Trả về mã 201 Created khi tạo tài nguyên thành công
+
+    // 2. Lấy gợi ý có xác suất cao nhất
+    const topSuggestion = suggestions[0];
+    const probability = topSuggestion.probability;
+
+    // 3. Đặt ngưỡng tin cậy (ví dụ: 50%)
+    const CONFIDENCE_THRESHOLD = 0.5;
+
+    console.log(
+      `Gợi ý hàng đầu: ${topSuggestion.name} với xác suất: ${probability}`
+    );
+
+    // 4. Kiểm tra xác suất so với ngưỡng
+    if (probability < CONFIDENCE_THRESHOLD) {
+      return res.status(200).json({
+        // Dùng 200 OK nhưng báo không chắc chắn
+        message: `Chúng tôi không chắc chắn đây là cây gì. Kết quả có khả năng cao nhất là '${
+          topSuggestion.name
+        }' nhưng độ chính xác quá thấp: ${probability * 100}%.`,
+        // Bạn có thể chọn không trả về identificationData nếu không muốn gây nhiễu
+        identificationData: null,
+      });
+    }
+
+    // Nếu xác suất đủ cao, trả về kết quả thành công
     res.status(201).json(identificationData);
   } catch (error) {
+    console.error("Lỗi khi nhận dạng cây:", error.message);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
 const handleAskChatbot = async (req, res) => {
-   if (!req.file) {
+  if (!req.file) {
     return res
-      .status(400)
-      .json({ error: "Không có file ảnh nào được tải lên." });
+      .status(200)
+      .json({
+        message:
+          "Tôi đang không biết bạn hỏi về loài cây gì?\nVui lòng gửi cho tôi 1 ảnh về loài cây mà bạn đang cần thắc mắc!",
+      });
   }
   try {
     const apiKey = process.env.API_KEY;
-    const imageBase64 = req.file.buffer.toString("base64");
     const question = req.body;
+    const imageBase64 = req.file.buffer.toString("base64");
     console.log("Controller: Nhận yêu cầu tạo phiên nhận dạng...");
     const result = await plantService.createIdentification(imageBase64);
     const identificationData = result.data;
-    const suggestions =
-      result.data.result.classification.suggestions;
+    const suggestions = result.data.result.classification.suggestions;
+
+    // 1. Kiểm tra xem có gợi ý nào không
     if (!suggestions || suggestions.length === 0) {
-      return res.status(200).json({
-        message:
-          "Nhận dạng thành công nhưng không tìm thấy loài cây nào phù hợp.",
+      return res.status(404).json({
+        // Nên dùng 404 Not Found
+        message: "Không nhận dạng được cây nào từ hình ảnh.",
       });
     }
     const topSuggestion = suggestions[0];
+    const probability = topSuggestion.probability;
+
+    // 3. Đặt ngưỡng tin cậy (ví dụ: 50%)
+    const CONFIDENCE_THRESHOLD = 0.5;
+
+    console.log(
+      `Gợi ý hàng đầu: ${topSuggestion.name} với xác suất: ${probability}`
+    );
+
+    // 4. Kiểm tra xác suất so với ngưỡng
     const entityId = topSuggestion.details.entity_id;
     const accessToken = identificationData.access_token;
-    const askChatbot = await plantService.askQuestion(question, accessToken, apiKey)
+    console.log("Lấy accessToken: ", accessToken);
+
+    const askChatbot = await plantService.askQuestion(
+      question,
+      accessToken,
+      apiKey
+    );
     const resultFinalData = {
       access_token: accessToken,
       indentification: topSuggestion,
-      answers: askChatbot
+      answers: askChatbot,
+    };
+    if (probability < CONFIDENCE_THRESHOLD) {
+      return res.status(200).json({
+        // Dùng 200 OK nhưng báo không chắc chắn
+        message: `Chúng tôi không chắc chắn đây là cây gì. Kết quả có khả năng cao nhất là '${
+          topSuggestion.name
+        }' nhưng độ chính xác quá thấp: ${probability * 100}%.`,
+        // Bạn có thể chọn không trả về identificationData nếu không muốn gây nhiễu
+        identificationData: resultFinalData,
+      });
     }
     // Trả về mã 201 Created khi tạo tài nguyên thành công
     res.status(201).json(resultFinalData);
@@ -162,5 +221,5 @@ module.exports = {
   handleCreateIdentification,
   handleAskQuestion,
   handleGetConversation,
-  handleAskChatbot
+  handleAskChatbot,
 };

@@ -71,7 +71,7 @@ module.exports = router;
  *                     "stock": 1000,
  *                     "id_cate": "685eab219a14a3dfe8333e6b",
  *                     "origin": "Châu phi",
- *                     "attribute": "Ưa bóng",
+ *                     "attribute": "Ưa bóng"
  *                   }
  *               image:
  *                 type: string

@@ -49,6 +49,7 @@ const UserSchema = new mongoose.Schema(
       default: "", // có thể dùng sau nếu hỗ trợ ảnh đại diện
     },
     is_allowed: { type: Boolean, default: true },
+    role: {type: String, default:"user"}
   },
   {
     timestamps: true,
