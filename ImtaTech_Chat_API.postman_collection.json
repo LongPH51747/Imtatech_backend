@@ -1,0 +1,639 @@
+{
+	"info": {
+		"_postman_id": "imtatech-chat-api",
+		"name": "ImtaTech Chat API",
+		"description": "Collection để test các API chat và message của ImtaTech Backend",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "🔐 Authentication",
+			"item": [
+				{
+					"name": "Login User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"123456\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/users/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "users", "login"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login Admin",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"123456\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/users/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "users", "login"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "💬 Chat API",
+			"item": [
+				{
+					"name": "Tạo phòng chat mới",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userId\": \"{{user_id}}\",\n  \"adminId\": \"{{admin_id}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/chat/rooms",
+							"host": ["{{base_url}}"],
+							"path": ["api", "chat", "rooms"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Lấy danh sách phòng chat",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/chat/rooms?role=user",
+							"host": ["{{base_url}}"],
+							"path": ["api", "chat", "rooms"],
+							"query": [
+								{
+									"key": "role",
+									"value": "user"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Lấy thông tin phòng chat",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/chat/rooms/{{chat_room_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "chat", "rooms", "{{chat_room_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Lấy tin nhắn trong phòng chat",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/chat/rooms/{{chat_room_id}}/messages?page=1&limit=20",
+							"host": ["{{base_url}}"],
+							"path": ["api", "chat", "rooms", "{{chat_room_id}}", "messages"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Đánh dấu tin nhắn đã đọc",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/chat/rooms/{{chat_room_id}}/read",
+							"host": ["{{base_url}}"],
+							"path": ["api", "chat", "rooms", "{{chat_room_id}}", "read"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Lấy số tin nhắn chưa đọc",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/chat/unread-count?role=user",
+							"host": ["{{base_url}}"],
+							"path": ["api", "chat", "unread-count"],
+							"query": [
+								{
+									"key": "role",
+									"value": "user"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Tìm kiếm phòng chat",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/chat/search?searchTerm=admin&role=user",
+							"host": ["{{base_url}}"],
+							"path": ["api", "chat", "search"],
+							"query": [
+								{
+									"key": "searchTerm",
+									"value": "admin"
+								},
+								{
+									"key": "role",
+									"value": "user"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Lấy thống kê chat",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/chat/stats?role=user",
+							"host": ["{{base_url}}"],
+							"path": ["api", "chat", "stats"],
+							"query": [
+								{
+									"key": "role",
+									"value": "user"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Xóa phòng chat",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/chat/rooms/{{chat_room_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "chat", "rooms", "{{chat_room_id}}"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "📨 Message API",
+			"item": [
+				{
+					"name": "Tạo tin nhắn mới (Text)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"chatRoomId\": \"{{chat_room_id}}\",\n  \"receiverId\": \"{{receiver_id}}\",\n  \"content\": \"Xin chào! Đây là tin nhắn test.\",\n  \"messageType\": \"text\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/messages",
+							"host": ["{{base_url}}"],
+							"path": ["api", "messages"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Tạo tin nhắn mới (Image)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"chatRoomId\": \"{{chat_room_id}}\",\n  \"receiverId\": \"{{receiver_id}}\",\n  \"messageType\": \"image\",\n  \"mediaUrl\": \"https://example.com/image.jpg\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/messages",
+							"host": ["{{base_url}}"],
+							"path": ["api", "messages"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Lấy tin nhắn theo ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/messages/{{message_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "messages", "{{message_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Lấy tin nhắn trong phòng chat",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/messages/chat-room/{{chat_room_id}}?page=1&limit=20",
+							"host": ["{{base_url}}"],
+							"path": ["api", "messages", "chat-room", "{{chat_room_id}}"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Lấy tin nhắn của user hiện tại",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/messages/my-messages?type=all&page=1&limit=20",
+							"host": ["{{base_url}}"],
+							"path": ["api", "messages", "my-messages"],
+							"query": [
+								{
+									"key": "type",
+									"value": "all"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Lấy tin nhắn chưa đọc",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/messages/unread?page=1&limit=20",
+							"host": ["{{base_url}}"],
+							"path": ["api", "messages", "unread"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Cập nhật tin nhắn",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"content\": \"Tin nhắn đã được cập nhật!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/messages/{{message_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "messages", "{{message_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Xóa tin nhắn",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/messages/{{message_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "messages", "{{message_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Tìm kiếm tin nhắn",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/messages/search/{{chat_room_id}}?searchTerm=test&page=1&limit=20",
+							"host": ["{{base_url}}"],
+							"path": ["api", "messages", "search", "{{chat_room_id}}"],
+							"query": [
+								{
+									"key": "searchTerm",
+									"value": "test"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Lấy thống kê tin nhắn",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/messages/stats/{{chat_room_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "messages", "stats", "{{chat_room_id}}"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "🔌 System Status",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": ["{{base_url}}"],
+							"path": ["health"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Socket Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/socket-status",
+							"host": ["{{base_url}}"],
+							"path": ["socket-status"]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Auto-save token after login",
+					"if (pm.response.code === 200 || pm.response.code === 201) {",
+					"    const response = pm.response.json();",
+					"    if (response.token) {",
+					"        pm.environment.set('token', response.token);",
+					"        console.log('Token saved:', response.token);",
+					"    }",
+					"    if (response.user && response.user._id) {",
+					"        pm.environment.set('user_id', response.user._id);",
+					"        console.log('User ID saved:', response.user._id);",
+					"    }",
+					"    if (response.chatRoom && response.chatRoom._id) {",
+					"        pm.environment.set('chat_room_id', response.chatRoom._id);",
+					"        console.log('Chat Room ID saved:', response.chatRoom._id);",
+					"    }",
+					"    if (response.data && response.data._id) {",
+					"        pm.environment.set('message_id', response.data._id);",
+					"        console.log('Message ID saved:', response.data._id);",
+					"    }",
+					"}",
+					"",
+					"// Log response for debugging",
+					"console.log('Response:', pm.response.json());"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:5000",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "user_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "admin_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "chat_room_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "message_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "receiver_id",
+			"value": "",
+			"type": "string"
+		}
+	]
+} 

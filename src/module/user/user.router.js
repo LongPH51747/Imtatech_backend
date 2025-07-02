@@ -11,6 +11,8 @@ router.post("/register", userController.register);
 
 router.post("/login", userController.login);
 
+router.post("/login-admin", userController.loginAdmin);
+
 router.get("/profile", authMiddleware, userController.getProfile);
 router.put("/profile", authMiddleware, userController.updateProfile);
 router.delete("/profile", authMiddleware, userController.deleteProfile);
@@ -111,6 +113,44 @@ module.exports = router;
  *                   $ref: '#/components/schemas/User'
  *       400:
  *         description: Sai thông tin đăng nhập
+ */
+
+/**
+ * @swagger
+ * /api/users/login-admin:
+ *   post:
+ *     summary: Đăng nhập tài khoản admin
+ *     tags: [User]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *             required:
+ *               - email
+ *               - password
+ *     responses:
+ *       200:
+ *         description: Đăng nhập admin thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 token:
+ *                   type: string
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Sai thông tin đăng nhập hoặc không phải admin
  */
 
 /**

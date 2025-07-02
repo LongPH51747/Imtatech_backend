@@ -58,6 +58,29 @@ exports.login = async ({ email, password }) => {
   return { token, user };
 };
 
+exports.loginAdmin = async ({ email, password }) => {
+  if (!email || !password) {
+    throw new Error("Vui lòng nhập đầy đủ email và password");
+  }
+  // Kiểm tra định dạng email
+  const emailRegex = /\S+@\S+\.\S+/;
+  if (!emailRegex.test(email.trim().toLowerCase())) {
+    throw new Error("Email không hợp lệ");
+  }
+  email = email.trim().toLowerCase();
+
+  const user = await User.findOne({ email });
+  if (!user || user.role !== "admin") {
+    throw new Error("Tài khoản không phải admin");
+  }
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    throw new Error("Sai mật khẩu");
+  }
+  const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: "7d" });
+  return { token, user };
+};
+
 exports.getProfile = async (userId) => {
   const user = await User.findById(userId).select("-password");
   if (!user) throw new Error("Không tìm thấy người dùng");
