@@ -80,6 +80,8 @@ module.exports = mongoose.model("User", UserSchema);
  *         role:
  *           type: string
  *           example: "user"
+ *         avatar:
+ *           type: string
  *         is_allowed:
  *           type: boolean
  *         createdAt:

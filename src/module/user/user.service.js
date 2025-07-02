@@ -80,7 +80,7 @@ exports.deleteProfile = async (userId) => {
 
 exports.getAllUser = async () => {
   try {
-    return await User.find()
+    return await User.find();
   } catch (error) {
     error.statusCode = 500;
     throw error;
@@ -108,4 +108,20 @@ exports.updateStatusUser = async (userId, isAllowed) => {
 // Ham xoa user
 exports.deleteUser = async (id) => {
   return await User.findByIdAndDelete(id).exec(); // Xoa user theo ID
+};
+
+exports.changePassword = async (userId, oldPassword, newPassword) => {
+  const user = await User.findById(userId);
+  if (!user) throw new Error("Không tìm thấy người dùng");
+  const isMatch = await bcrypt.compare(oldPassword, user.password);
+  if (!isMatch) throw new Error("Mật khẩu cũ không đúng");
+  if (newPassword.length < 6) throw new Error("Mật khẩu mới tối thiểu 6 ký tự");
+  user.password = await bcrypt.hash(newPassword, 10);
+  await user.save();
+  return true;
+};
+
+exports.changeAvata = async (avata, id) => {
+  const avataUser = await User.findByIdAndUpdate(id, { avatar: avata });
+  return avataUser;
 };

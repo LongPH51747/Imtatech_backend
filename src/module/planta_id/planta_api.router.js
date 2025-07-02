@@ -7,23 +7,11 @@ const plantController = require("./planta_api.contronller");
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-// URL chỉ là '/identify'
-router.post(
-  "/identify",
-  upload.single("plantImage"),
-  plantController.handleIdentifyPlant
-);
 router.post(
   "/identification",
   upload.single("plantImage"),
   plantController.handleCreateIdentification
 );
-router.post(
-  "/identification/ask",
-  upload.single("plantImage"),
-  plantController.handleAskChatbot
-);
-
 // 2. Route để GỬI CÂU HỎI vào một cuộc hội thoại đã có
 // Endpoint: POST /api/plant/conversation/:id
 router.post("/conversation/ask/:id", plantController.handleAskQuestion);
@@ -58,35 +46,6 @@ module.exports = router;
  *                 type: string
  *                 format: binary
  *                 description: Ảnh cây cần nhận diện
- *     responses:
- *       200:
- *         description: Nhận diện thành công, trả về thông tin cây
- *       400:
- *         description: Dữ liệu ảnh không hợp lệ
- *       500:
- *         description: Lỗi server hoặc từ API plant.id
- */
-
-/**
- * @swagger
- * /api/plant/identification/ask:
- *   post:
- *     summary: Nhận diện cây từ ảnh và trả lời câu hỏi
- *     tags: [Plant]
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             type: object
- *             properties:
- *               plantImage:
- *                 type: string
- *                 format: binary
- *                 description: Ảnh cây cần nhận diện
- *               question:
- *                 type: string
- *                 description: câu hỏi cho chat bot
  *     responses:
  *       200:
  *         description: Nhận diện thành công, trả về thông tin cây

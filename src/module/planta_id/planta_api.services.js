@@ -39,7 +39,8 @@ async function getPlantDetailsById(accessToken, entityId, apiKey) {
 
 const createIdentification = async (imageBase64) => {
   const apiKey = process.env.API_KEY;
-
+  console.log("API_KEY", apiKey);
+  
   if (!apiKey) {
     throw new Error("PLANT_ID_API_KEY không được tìm thấy trong file .env");
   }
@@ -51,6 +52,8 @@ const createIdentification = async (imageBase64) => {
       images: [imageBase64],
       similar_images: true,
     };
+    console.log("chưa die");
+    
     return await axios.post(endpointURL, payload, {
       headers: { "Api-Key": apiKey, "Content-Type": "application/json" },
     });

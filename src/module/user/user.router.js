@@ -16,7 +16,8 @@ router.put("/profile", authMiddleware, userController.updateProfile);
 router.delete("/profile", authMiddleware, userController.deleteProfile);
 router.patch("/update-status-user/:id", userController.updateStatusUser); // Cap nhat trang thai user
 router.delete("/delete-by-id/:id", userController.deleteUser); // Xoa user theo ID
-
+router.post("/change-password", authMiddleware, userController.changePassword);
+router.patch('/change-avatar', authMiddleware, userController.changeAvata)
 module.exports = router;
 
 /**
@@ -229,4 +230,56 @@ module.exports = router;
  *     responses:
  *       200:
  *         description: Xoá thành công
+ */
+
+/**
+ * @swagger
+ * /user/change-password:
+ *   post:
+ *     summary: Đổi mật khẩu (cần xác thực)
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               oldPassword:
+ *                 type: string
+ *               newPassword:
+ *                 type: string
+ *             required:
+ *               - oldPassword
+ *               - newPassword
+ *     responses:
+ *       200:
+ *         description: Đổi mật khẩu thành công
+ *       400:
+ *         description: Lỗi xác thực hoặc dữ liệu không hợp lệ
+ */
+
+/**
+ * @swagger
+ * /api/users/change-avatar/:
+ *   patch:
+ *     summary: Cập nhật ảnh người dùng 
+ *     tags: [User]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               avatar:
+ *                 type: string
+ *                 description: truyền thẳng cái ảnh khi mà lấy từ điện thoại vào (không phải file)
+ *     responses:
+ *       200:
+ *         description: Cập nhật trạng thái thành công
+ *       404:
+ *         description: Không tìm thấy người dùng
  */

@@ -36,7 +36,13 @@ router.delete("/delete/:id", productContronller.delete);
 
 router.get("/search-product", productContronller.searchProduct);
 
-router.put("/update-product-by-id/:id", productContronller.updateProduct);
+router.put(
+  "/update-product-by-id/:id",
+  upload.single(
+    "image" // Ảnh chính của sản phẩm
+  ),
+  productContronller.updateProduct
+);
 
 module.exports = router;
 
@@ -74,7 +80,7 @@ module.exports = router;
  *                     "attribute": "Ưa bóng"
  *                   }
  *               image:
- *                 type: string
+ *                 type: file
  *                 format: binary
  *                 description: Ảnh chính của sản phẩm (đại diện)
  *     responses:
@@ -229,7 +235,7 @@ module.exports = router;
  *               size:
  *                 type: string
  *                 description: "Kích thước sản phẩm"
- *                 example: "XL"
+ *                 example: "small"
  *               price:
  *                 type: number
  *                 description: "Giá bán sản phẩm"

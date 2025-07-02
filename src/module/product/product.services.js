@@ -119,17 +119,16 @@ exports.searchProduct = async (query, categoryId) => {
   const keyword = new RegExp(query, "i");
   const condition = {
     $or: [
-      { product_name: keyword }, // theo tên
-      { "product_variant.variant_color": keyword }, // tạm thời để theo cả màu về sau lọc tiếp
+      { name_Product: keyword }, // theo tên
     ],
   };
 
   if (categoryId) {
     // nếu có thêm cái id của bọn danh mục để lọc
-    condition.product_category = categoryId;
+    condition.id_cate = categoryId;
   }
 
-  return await Product.find(condition).populate("product_category").exec();
+  return await Product.find(condition).populate("id_cate").exec();
 };
 
 exports.updateStatusToTrue = async (id) => {
@@ -189,10 +188,10 @@ exports.updateProduct = async (id, data, file = null) => {
   if (id_cate) product.id_cate = id_cate;
   if (size) product.size = size;
   if (color) product.color = color;
+  if (stock) product.stock = stock
   if (origin) product.origin = origin;
   if (attribute) product.attribute = attribute;
   if (status) product.status = status;
-  if (image) product.image = image;
 
   if (file?.buffer) {
     const filePath = await saveImageToDisk(

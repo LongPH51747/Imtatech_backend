@@ -124,7 +124,7 @@ exports.delete = async (req, res) => {
 exports.searchProduct = async (req, res, next) => {
   try {
     const { q, categoryId } = req.query;
-    const result = await productService.searchProduct(q || "", categoryId);
+    const result = await productServices.searchProduct(q || "", categoryId);
     res.status(200).json(result);
   } catch (error) {
     next(error);
@@ -165,7 +165,7 @@ exports.updateProduct = async (req, res, next) => {
     console.log("Update product ID:", id);
     const data = req.body;
     const file = req.file || null; // Ảnh sản phẩm nếu có (từ form-data)
-    const result = await productService.updateProduct(id, data, file);
+    const result = await productServices.updateProduct(id, data, file);
     if (!result) {
       throw new Error("Loi cap nhat san pham");
     }

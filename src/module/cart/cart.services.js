@@ -355,9 +355,7 @@ exports.getByUserId = async(id) => {
     const dataCartByUser = await Cart.findOne({userId: id});
     
     if (!dataCartByUser) {
-      const error = new Error('Không tìm thấy giỏ hàng của người dùng này');
-      error.statusCode = 404;
-      throw error;
+      return []
     }
     
     return dataCartByUser;
