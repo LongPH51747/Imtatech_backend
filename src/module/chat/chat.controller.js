@@ -4,6 +4,23 @@ const chatService = require('./chat.service');
  * Tạo phòng chat mới
  * POST /api/chat/rooms
  */
+exports.findOrCreateChat = async(req, res) => {
+    try {
+        const userId = req.user._id;
+
+        const {adminId} = req.body;
+
+        if(!adminId){
+            return res.status(400).json({ error: 'Vui lòng cung cấp adminId.' });
+        }
+         const { room, status } = await chatService.findOrCreateRoomForUser(userId, adminId);
+         res.status(status).json(room)
+    } catch (error) {
+         console.error('Lỗi khi tìm hoặc tạo phòng chat:', error);
+    res.status(500).json({ error: error.message });
+    }
+}
+
 exports.createChatRoom = async (req, res) => {
     try {
         const { userId, adminId } = req.body;
@@ -30,16 +47,26 @@ exports.createChatRoom = async (req, res) => {
  */
 exports.getChatRooms = async (req, res) => {
     try {
-        const userId = req.user._id; // Lấy từ middleware auth
-        const role = req.query.role || 'user'; // Mặc định là user, có thể là admin
-        
-        const chatRooms = await chatService.getChatRooms(userId, role);
-        res.status(200).json({ 
-            message: 'Lấy danh sách phòng chat thành công', 
-            chatRooms 
-        });
+        // 1. Lấy ID người dùng từ middleware xác thực.
+        // req.user được thêm vào từ một middleware (ví dụ: isAuth) sau khi giải mã token.
+        const loggedInUserId = req.user._id;
+
+        if (!loggedInUserId) {
+            return res.status(401).json({ error: 'Không tìm thấy thông tin người dùng đã xác thực.' });
+        }
+
+        // 2. Gọi hàm service mới (chỉ cần truyền vào userId).
+        const chatRooms = await chatService.getChatRooms(loggedInUserId);
+
+        // 3. Trả về danh sách phòng chat.
+        // Thông thường, với request GET một danh sách, ta chỉ cần trả về mảng dữ liệu.
+        res.status(200).json(chatRooms);
+
     } catch (err) {
-        res.status(400).json({ error: err.message });
+        // Ghi lại lỗi ở server để dễ dàng gỡ lỗi
+        console.error('Lỗi khi lấy danh sách phòng chat:', err); 
+        // Trả về lỗi cho client
+        res.status(500).json({ error: 'Đã có lỗi xảy ra trên máy chủ.' });
     }
 };
 

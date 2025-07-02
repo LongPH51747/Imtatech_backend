@@ -24,8 +24,8 @@ class SocketManager {
     initializeSocket() {
         this.io.use(async (socket, next) => {
             try {
-                // Xác thực token từ handshake
-                const token = socket.handshake.auth.token || socket.handshake.headers.authorization;
+                // --- SỬA LỖI Ở ĐÂY: Thêm socket.handshake.query.token vào để tìm kiếm ---
+                const token = socket.handshake.query.token || socket.handshake.auth.token || socket.handshake.headers.authorization;
                 
                 if (!token) {
                     return next(new Error('Token không được cung cấp'));
@@ -43,6 +43,7 @@ class SocketManager {
                 socket.user = user;
                 next();
             } catch (error) {
+                console.error("Lỗi xác thực Socket:", error.message);
                 next(new Error('Token không hợp lệ'));
             }
         });
@@ -185,7 +186,10 @@ class SocketManager {
                 const message = await Message.create(messageData);
                 
                 // Populate thông tin sender và receiver
-                await message.populate(['sender', 'receiver']);
+                await message.populate([
+                  { path: 'sender', select: 'name email avatar role' },
+                  { path: 'receiver', select: 'name email avatar role' }
+                ]);
 
                 // Cập nhật thông tin phòng chat
                 const updateData = {
@@ -361,7 +365,10 @@ class SocketManager {
                     messageId,
                     { content: content.trim() },
                     { new: true }
-                ).populate(['sender', 'receiver']);
+                ).populate([
+                  { path: 'sender', select: 'name email avatar role' },
+                  { path: 'receiver', select: 'name email avatar role' }
+                ]);
 
                 // Thông báo cho tất cả user trong phòng chat
                 this.io.to(`chat-room:${chatRoomId}`).emit('message:updated', {

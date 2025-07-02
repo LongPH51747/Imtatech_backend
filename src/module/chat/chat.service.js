@@ -9,6 +9,41 @@ const User = require('../user/user.model');
  * @param {string} data.adminId - ID admin
  * @returns {Promise<Object>} Phòng chat đã tạo
  */
+
+exports.findOrCreateRoomForUser = async(userId, adminId) => {
+  let room = await ChatRoom.findOne({
+      user: userId,
+      admin: adminId,
+  })
+    .populate('user', 'name email avatar') 
+   .populate('admin', 'name email avatar'); 
+
+  if(room){
+    return {
+      room, status: 200};
+  }else{
+    const [user, admin] = await Promise.all([
+      User.findById(userId),
+      User.findById(adminId),
+    ]);
+    if(!user || !admin){
+       throw new Error('Người dùng hoặc admin không tồn tại.');
+    }
+
+    const newRoomData = await ChatRoom.create({
+      user: userId,
+      admin: adminId
+    });
+
+    const newRoom = await ChatRoom.findById(newRoomData._id)
+    .populate('user', 'name email avatar')
+        .populate('admin', 'name email avatar');
+
+      return {room: newRoom, status: 200}
+  }
+
+};
+
 exports.createChatRoom = async (data) => {
   try {
     const { userId, adminId } = data;
@@ -48,16 +83,25 @@ exports.createChatRoom = async (data) => {
  * @param {string} role - Vai trò ('user' hoặc 'admin')
  * @returns {Promise<Array>} Danh sách phòng chat
  */
-exports.getChatRooms = async (userId, role = 'user') => {
+exports.getChatRooms = async (userId) => {
   try {
-    const query = role === 'admin' ? { admin: userId } : { user: userId };
-    
-    const chatRooms = await ChatRoom.find(query)
-      .populate('user', 'name email avatar')
-      .populate('admin', 'name email avatar')
-      .populate('lastMessage')
-      .sort({ lastMessageAt: -1 });
-    
+    // Kiểm tra xem userId có được cung cấp không
+    if (!userId) {
+      throw new Error('User ID is required to fetch chat rooms.');
+    }
+
+    // Câu lệnh query tìm tất cả các phòng mà userId xuất hiện trong trường 'user' HOẶC 'admin'
+    const chatRooms = await ChatRoom.find({
+      $or: [
+        { user: userId },
+        { admin: userId }
+      ]
+    })
+      .populate('user', 'name email avatar') // Lấy thông tin của người dùng trong phòng
+      .populate('admin', 'name email avatar') // Lấy thông tin của admin trong phòng
+      .populate('lastMessage') // Lấy thông tin tin nhắn cuối cùng
+      .sort({ lastMessageAt: -1 }); // Sắp xếp để phòng chat có hoạt động gần nhất lên đầu
+
     return chatRooms;
   } catch (error) {
     throw error;

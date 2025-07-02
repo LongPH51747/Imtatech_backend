@@ -12,7 +12,7 @@ exports.create = async (req, res) => {
 exports.getAll = async (req, res) => {
     try {
         const categories = await categoryService.getAll();
-        res.json(categories);
+        res.status(200).json(categories);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

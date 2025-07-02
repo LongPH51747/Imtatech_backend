@@ -20,39 +20,43 @@
 
 // module.exports = mongoose.model('User', UserSchema);
 
+const mongoose = require("mongoose");
 
-const mongoose = require('mongoose');
-
-const UserSchema = new mongoose.Schema({
+const UserSchema = new mongoose.Schema(
+  {
     name: {
-        type: String,
-        required: true,
-        trim: true,
+      type: String,
+      required: true,
+      trim: true,
     },
 
     email: {
-        type: String,
-        required: true,
-        unique: true,
-        lowercase: true,
-        trim: true,
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
     },
 
     password: {
-        type: String,
-        required: true,
-        minlength: 6,
+      type: String,
+      required: true,
+      minlength: 6,
     },
 
     avatar: {
-        type: String,
-        default: '', // có thể dùng sau nếu hỗ trợ ảnh đại diện
-    }
-}, {
+      type: String,
+      default: "", // có thể dùng sau nếu hỗ trợ ảnh đại diện
+    },
+    is_allowed: { type: Boolean, default: true },
+    role: {type: String, default:"user"}
+  },
+  {
     timestamps: true,
-});
+  }
+);
 
-module.exports = mongoose.model('User', UserSchema);
+module.exports = mongoose.model("User", UserSchema);
 
 /**
  * @swagger
@@ -76,6 +80,8 @@ module.exports = mongoose.model('User', UserSchema);
  *         role:
  *           type: string
  *           example: "user"
+ *         is_allowed:
+ *           type: boolean
  *         createdAt:
  *           type: string
  *           format: date-time

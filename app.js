@@ -36,15 +36,22 @@ const socketManager = new SocketManager(server);
 app.set('socketManager', socketManager);
 
 // View engine setup
+var cart = require('./src/module/cart/cart.router')
+var product = require('./src/module/product/product.router')
+var order = require('./src/module/order/order.router')
+var statistics = require('./src/module/statistics/statistics.router')
+var plantaAPI = require('./src/module/planta_id/planta_api.router')
+// view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
 
 // Middleware
 app.use(logger('dev'));
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: true, limit: '20mb'}));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads_product', express.static(path.join(__dirname, './src/public/uploads_product')))
 
 // CORS configuration
 app.use(cors({
@@ -66,6 +73,7 @@ app.use('/api/order', orderRouter);
 app.use('/api/chat', chatRouter);
 app.use('/api/messages', messageRouter);
 app.use('/api', plantaAPIRouter);
+// ROUTES
 
 // Swagger API Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
@@ -75,6 +83,18 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: "ImtaTech API Documentation"
 }));
+
+db.connectDB();
+app.use('/', indexRouter);
+app.use('/api/users', userRouter);
+app.use('/api/categories', categoryRouter);
+app.use('/api/products', product)
+app.use('/api/cart', cart)
+app.use('/api/order', order)
+app.use('/api/plant', plantaAPI)
+app.use('/api/statistics', statistics)
+// catch 404 and forward to error handler
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); // Cung cap API docs
 
 // Health check endpoint
 app.get('/health', (req, res) => {

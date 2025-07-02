@@ -7,11 +7,27 @@ const messageService = require('./message.service');
 exports.createMessage = async (req, res) => {
     try {
         const { chatRoomId, receiverId, content, messageType, mediaUrl } = req.body;
-        const senderId = req.user._id; // Lấy từ middleware auth
         
+        // Kiểm tra xác thực người dùng
+        if (!req.user || !req.user._id) {
+            return res.status(401).json({
+                error: 'Bạn cần đăng nhập để thực hiện hành động này'
+            });
+        }
+        
+        const senderId = req.user._id;
+
+        // Kiểm tra các trường bắt buộc
         if (!chatRoomId || !receiverId) {
             return res.status(400).json({ 
                 error: 'Vui lòng cung cấp chatRoomId và receiverId' 
+            });
+        }
+
+        // Kiểm tra người gửi và người nhận
+        if (senderId.toString() === receiverId) {
+            return res.status(400).json({
+                error: 'Không thể gửi tin nhắn cho chính mình'
             });
         }
 
@@ -41,6 +57,7 @@ exports.createMessage = async (req, res) => {
             data: message 
         });
     } catch (err) {
+        console.error('Lỗi khi tạo tin nhắn:', err);
         res.status(400).json({ error: err.message });
     }
 };

@@ -109,7 +109,7 @@ exports.create = async (orderData, userId) => {
       let image_url = "";
 
       if (Buffer.isBuffer(productDoc.image)) {
-        const base64 = productDoc.iimageamge.toString("base64");
+        const base64 = productDoc.image.toString("base64");
         const type = productDoc.image || "image/png";
         image_url = `data:${type};base64,${base64}`;
       } else if (typeof productDoc.image === "string") {
@@ -123,6 +123,7 @@ exports.create = async (orderData, userId) => {
         unit_price_item: productDoc.price,
         total_price_item: itemTotalPrice,
         image: image_url,
+        cate_name: productDoc.id_cate
       });
 
       subTotalAmountForOrder += itemTotalPrice;

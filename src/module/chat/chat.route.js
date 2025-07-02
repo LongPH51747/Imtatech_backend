@@ -9,6 +9,8 @@ router.use(authMiddleware);
 
 // ===== QUẢN LÝ PHÒNG CHAT =====
 
+router.post("/find-or-create", chatController.findOrCreateChat);
+
 /**
  * Tạo phòng chat mới
  * POST /api/chat/rooms

@@ -16,22 +16,41 @@ const ChatRoom = require('../chat/chat.model');
 exports.createMessage = async (data) => {
   try {
     const { chatRoomId, senderId, receiverId, content, messageType = 'text', mediaUrl } = data;
-    
-    // Kiểm tra phòng chat có tồn tại không
-    const chatRoom = await ChatRoom.findById(chatRoomId);
-    if (!chatRoom) {
-      throw new Error('Không tìm thấy phòng chat');
+
+    // ==================== CẢI TIẾN 1: Ngăn chặn tự gửi tin nhắn ====================
+    // Kiểm tra ngay từ đầu để tránh các truy vấn không cần thiết.
+    if (senderId.toString() === receiverId.toString()) {
+      throw new Error('Bạn không thể gửi tin nhắn cho chính mình.');
     }
-    
-    // Kiểm tra người gửi và người nhận
-    const sender = await User.findById(senderId);
-    const receiver = await User.findById(receiverId);
-    
+    // ==============================================================================
+
+    // Kiểm tra phòng chat, người gửi và người nhận cùng lúc để tối ưu
+    const [chatRoom, sender, receiver] = await Promise.all([
+      ChatRoom.findById(chatRoomId),
+      User.findById(senderId),
+      User.findById(receiverId)
+    ]);
+
+    if (!chatRoom) {
+      throw new Error('Phòng chat không tồn tại');
+    }
     if (!sender || !receiver) {
       throw new Error('Người gửi hoặc người nhận không tồn tại');
     }
+
+    // Kiểm tra xem người gửi và người nhận có đúng với phòng chat không
+    const isAdmin = (id) => id.toString() === chatRoom.admin.toString();
+    const isUser = (id) => id.toString() === chatRoom.user.toString();
+
+    // Đảm bảo một người là admin và một người là user của phòng chat
+    if (!(
+      (isAdmin(senderId) && isUser(receiverId)) || 
+      (isUser(senderId) && isAdmin(receiverId))
+    )) {
+      throw new Error('Người gửi và người nhận phải là admin và user của phòng chat');
+    }
     
-    // Tạo dữ liệu tin nhắn
+    // Xây dựng đối tượng messageData
     const messageData = {
       chatRoomId,
       sender: senderId,
@@ -39,7 +58,7 @@ exports.createMessage = async (data) => {
       messageType
     };
     
-    // Validation theo loại tin nhắn
+    // Validation và gán dữ liệu theo loại tin nhắn
     if (messageType === 'text') {
       if (!content || content.trim() === '') {
         throw new Error('Nội dung tin nhắn không được để trống');
@@ -54,31 +73,30 @@ exports.createMessage = async (data) => {
       throw new Error('Loại tin nhắn không hợp lệ');
     }
     
+    // Tạo tin nhắn trong CSDL
     const message = await Message.create(messageData);
     
     // Cập nhật thông tin phòng chat
-    const updateData = {
+    const roomUpdateData = {
       lastMessage: message._id,
-      lastMessageAt: new Date()
+      lastMessageAt: message.createdAt, // Sử dụng luôn thời gian tạo của tin nhắn
+      lastMessageContent: messageType === 'text' ? message.content : `[${messageType}]`
     };
     
-    if (messageType === 'text') {
-      updateData.lastMessageContent = content;
-    } else {
-      updateData.lastMessageContent = `[${messageType}]`;
+    // Cập nhật số tin nhắn chưa đọc cho người nhận
+    if (isUser(receiverId)) { // Nếu người nhận là user
+      roomUpdateData.$inc = { unreadCountUser: 1 };
+    } else { // Nếu người nhận là admin
+      roomUpdateData.$inc = { unreadCountAdmin: 1 };
     }
     
-    // Cập nhật số tin nhắn chưa đọc
-    if (senderId === chatRoom.user.toString()) {
-      updateData.unreadCountAdmin = (chatRoom.unreadCountAdmin || 0) + 1;
-    } else {
-      updateData.unreadCountUser = (chatRoom.unreadCountUser || 0) + 1;
-    }
+    await ChatRoom.findByIdAndUpdate(chatRoomId, roomUpdateData);
     
-    await ChatRoom.findByIdAndUpdate(chatRoomId, updateData);
-    
-    return await message.populate(['sender', 'receiver']);
+    // Trả về tin nhắn đã được populate đầy đủ thông tin sender và receiver
+    return await Message.findById(message._id).populate(['sender', 'receiver']);
+
   } catch (error) {
+    // Ném lỗi ra để tầng controller có thể bắt và xử lý
     throw error;
   }
 };
@@ -124,8 +142,8 @@ exports.getMessagesByChatRoom = async (chatRoomId, page = 1, limit = 20, message
     }
     
     const messages = await Message.find(query)
-      .populate('sender', 'name email avatar')
-      .populate('receiver', 'name email avatar')
+      .populate('sender', 'name email avatar role')
+      .populate('receiver', 'name email avatar role')
       .populate('readBy', 'name email avatar')
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -159,8 +177,8 @@ exports.getMessagesBySender = async (senderId, page = 1, limit = 20) => {
     const skip = (page - 1) * limit;
     
     const messages = await Message.find({ sender: senderId })
-      .populate('sender', 'name email avatar')
-      .populate('receiver', 'name email avatar')
+      .populate('sender', 'name email avatar role')
+      .populate('receiver', 'name email avatar role')
       .populate('chatRoomId')
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -194,8 +212,8 @@ exports.getMessagesByReceiver = async (receiverId, page = 1, limit = 20) => {
     const skip = (page - 1) * limit;
     
     const messages = await Message.find({ receiver: receiverId })
-      .populate('sender', 'name email avatar')
-      .populate('receiver', 'name email avatar')
+      .populate('sender', 'name email avatar role')
+      .populate('receiver', 'name email avatar role')
       .populate('chatRoomId')
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -384,8 +402,8 @@ exports.searchMessages = async (chatRoomId, searchTerm, page = 1, limit = 20) =>
       chatRoomId,
       content: { $regex: searchTerm, $options: 'i' }
     })
-      .populate('sender', 'name email avatar')
-      .populate('receiver', 'name email avatar')
+      .populate('sender', 'name email avatar role')
+      .populate('receiver', 'name email avatar role')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
@@ -465,8 +483,8 @@ exports.getUnreadMessages = async (userId, page = 1, limit = 20) => {
       receiver: userId,
       readBy: { $ne: userId }
     })
-      .populate('sender', 'name email avatar')
-      .populate('receiver', 'name email avatar')
+      .populate('sender', 'name email avatar role')
+      .populate('receiver', 'name email avatar role')
       .populate('chatRoomId')
       .sort({ createdAt: -1 })
       .skip(skip)

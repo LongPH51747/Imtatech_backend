@@ -101,12 +101,34 @@ exports.deleteProfile = async (userId) => {
   return user;
 };
 
-exports.getAllUser = async (next) => {
+exports.getAllUser = async () => {
   try {
     return await User.find()
   } catch (error) {
     error.statusCode = 500;
     throw error;
-    next(error);
   }
+};
+
+exports.updateStatusUser = async (userId, isAllowed) => {
+  try {
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { is_allowed: isAllowed },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      throw new Error("Không tìm thấy người dùng");
+    }
+
+    return updatedUser;
+  } catch (error) {
+    throw new Error("Cập nhật trạng thái thất bại: " + error.message);
+  }
+};
+
+// Ham xoa user
+exports.deleteUser = async (id) => {
+  return await User.findByIdAndDelete(id).exec(); // Xoa user theo ID
 };
