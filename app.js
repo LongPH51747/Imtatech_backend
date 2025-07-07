@@ -12,12 +12,6 @@ const http = require('http');
 const indexRouter = require('./routes/index');
 const userRouter = require('./src/module/user/user.router');
 const categoryRouter = require('./src/module/category/category.router');
-const cartRouter = require('./src/module/cart/cart.router');
-const productRouter = require('./src/module/product/product.router');
-const orderRouter = require('./src/module/order/order.router');
-const chatRouter = require('./src/module/chat/chat.route');
-const messageRouter = require('./src/module/messages/message.route');
-const plantaAPIRouter = require('./src/module/planta_id/planta_api.router');
 
 // Import configurations
 const db = require('./src/config/db');
@@ -62,20 +56,6 @@ app.use(cors({
 }));
 
 // Database connection
-db.connectDB();
-
-// API Routes
-app.use('/', indexRouter);
-app.use('/api/users', userRouter);
-app.use('/api/categories', categoryRouter);
-app.use('/api/products', productRouter);
-app.use('/api/cart', cartRouter);
-app.use('/api/order', orderRouter);
-app.use('/api/chat', chatRouter);
-app.use('/api/messages', messageRouter);
-app.use('/api', plantaAPIRouter);
-// ROUTES
-
 // Swagger API Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   swaggerOptions: {
