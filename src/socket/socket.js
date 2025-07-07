@@ -24,33 +24,42 @@ class SocketManager {
     initializeSocket() {
         this.io.use(async (socket, next) => {
             try {
+                console.log(`[SOCKET] [${new Date().toISOString()}] Bắt đầu xác thực kết nối: ${socket.id}`);
+                const startAuth = Date.now();
                 // --- SỬA LỖI Ở ĐÂY: Thêm socket.handshake.query.token vào để tìm kiếm ---
                 const token = socket.handshake.query.token || socket.handshake.auth.token || socket.handshake.headers.authorization;
-                
                 if (!token) {
+                    console.log(`[SOCKET] [${new Date().toISOString()}] Không có token, từ chối kết nối: ${socket.id}`);
                     return next(new Error('Token không được cung cấp'));
                 }
-
                 // Xác thực JWT token
-                const decoded = jwt.verify(token.replace('Bearer ', ''), JWT_SECRET);
+                let decoded;
+                try {
+                    decoded = jwt.verify(token.replace('Bearer ', ''), JWT_SECRET);
+                } catch (err) {
+                    console.log(`[SOCKET] [${new Date().toISOString()}] Token không hợp lệ: ${socket.id}`);
+                    return next(new Error('Token không hợp lệ'));
+                }
+                const startFindUser = Date.now();
                 const user = await User.findById(decoded.id).select('-password');
-                
+                const endFindUser = Date.now();
                 if (!user) {
+                    console.log(`[SOCKET] [${new Date().toISOString()}] Không tìm thấy user: ${socket.id}`);
                     return next(new Error('Người dùng không tồn tại'));
                 }
-
                 socket.userId = user._id.toString();
                 socket.user = user;
+                const endAuth = Date.now();
+                console.log(`[SOCKET] [${new Date().toISOString()}] Xác thực thành công: ${socket.id}, userId: ${socket.userId}, thời gian xác thực: ${endAuth - startAuth}ms, tìm user: ${endFindUser - startFindUser}ms`);
                 next();
             } catch (error) {
-                console.error("Lỗi xác thực Socket:", error.message);
+                console.error(`[SOCKET] [${new Date().toISOString()}] Lỗi xác thực Socket:`, error.message);
                 next(new Error('Token không hợp lệ'));
             }
         });
 
         this.io.on('connection', (socket) => {
-            console.log(`User ${socket.userId} đã kết nối: ${socket.id}`);
-            
+            console.log(`[SOCKET] [${new Date().toISOString()}] User ${socket.userId} đã kết nối: ${socket.id}`);
             this.handleConnection(socket);
             this.handleDisconnection(socket);
             this.handleChatEvents(socket);
@@ -113,29 +122,30 @@ class SocketManager {
     handleChatEvents(socket) {
         // Tham gia vào phòng chat
         socket.on('join:chat-room', async (data) => {
+            const joinStart = Date.now();
             try {
                 const { chatRoomId } = data;
-                
-                // Kiểm tra quyền truy cập phòng chat
+                console.log(`[SOCKET] [${new Date().toISOString()}] User ${socket.userId} yêu cầu join phòng: ${chatRoomId}`);
+                const startFindRoom = Date.now();
                 const chatRoom = await ChatRoom.findById(chatRoomId);
+                const endFindRoom = Date.now();
                 if (!chatRoom) {
+                    console.log(`[SOCKET] [${new Date().toISOString()}] Không tìm thấy phòng chat: ${chatRoomId}`);
                     socket.emit('error', { message: 'Không tìm thấy phòng chat' });
                     return;
                 }
-                
-                // Kiểm tra user có trong phòng chat không
                 if (chatRoom.user.toString() !== socket.userId && 
                     chatRoom.admin.toString() !== socket.userId) {
+                    console.log(`[SOCKET] [${new Date().toISOString()}] User ${socket.userId} không có quyền vào phòng: ${chatRoomId}`);
                     socket.emit('error', { message: 'Bạn không có quyền truy cập phòng chat này' });
                     return;
                 }
-                
-                // Tham gia vào phòng chat
                 socket.join(`chat-room:${chatRoomId}`);
-                console.log(`User ${socket.userId} đã tham gia phòng chat: ${chatRoomId}`);
-                
+                const joinEnd = Date.now();
+                console.log(`[SOCKET] [${new Date().toISOString()}] User ${socket.userId} đã join phòng chat: ${chatRoomId}, thời gian tìm phòng: ${endFindRoom - startFindRoom}ms, tổng thời gian xử lý: ${joinEnd - joinStart}ms`);
                 socket.emit('joined:chat-room', { chatRoomId });
             } catch (error) {
+                console.log(`[SOCKET] [${new Date().toISOString()}] Lỗi khi join phòng chat:`, error.message);
                 socket.emit('error', { message: error.message });
             }
         });
@@ -150,9 +160,10 @@ class SocketManager {
 
         // Gửi tin nhắn
         socket.on('send:message', async (data) => {
+            const sendMsgStart = Date.now();
             try {
                 const { chatRoomId, receiverId, content, messageType = 'text', mediaUrl } = data;
-                
+                console.log(`[SOCKET] [${new Date().toISOString()}] User ${socket.userId} gửi tin nhắn tới phòng ${chatRoomId}, receiver: ${receiverId}, type: ${messageType}`);
                 // Validation
                 if (!chatRoomId || !receiverId) {
                     socket.emit('error', { message: 'Thiếu thông tin bắt buộc' });
@@ -229,7 +240,10 @@ class SocketManager {
                 }
 
                 console.log(`Tin nhắn mới từ ${socket.userId} đến ${receiverId} trong phòng ${chatRoomId}`);
+                const sendMsgEnd = Date.now();
+                console.log(`[SOCKET] [${new Date().toISOString()}] Gửi tin nhắn thành công, thời gian xử lý: ${sendMsgEnd - sendMsgStart}ms`);
             } catch (error) {
+                console.log(`[SOCKET] [${new Date().toISOString()}] Lỗi gửi tin nhắn:`, error.message);
                 socket.emit('error', { message: error.message });
             }
         });
