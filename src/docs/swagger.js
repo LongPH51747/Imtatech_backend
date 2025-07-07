@@ -24,7 +24,7 @@ const swaggerOptions = {
     ],
     servers: [
       {
-        url: 'https://1e35-2405-4803-fbc1-b6a0-ec58-d662-bf8d-f9a5.ngrok-free.app',
+        url: 'https://c2bc-2405-4802-213-7bb0-d8b1-e566-f767-c030.ngrok-free.app',
       },
     ],
   },

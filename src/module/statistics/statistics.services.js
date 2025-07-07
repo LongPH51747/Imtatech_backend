@@ -26,9 +26,7 @@ exports.getRevenueByDateRange = async (startDate, endDate) => {
       {
         $group: {
           _id: {
-            year: { $year: "$createdAt" },
-            month: { $month: "$createdAt" },
-            day: { $dayOfMonth: "$createdAt" },
+            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
           },
           totalRevenue: { $sum: "$sub_total_amount" },
         },
@@ -36,24 +34,17 @@ exports.getRevenueByDateRange = async (startDate, endDate) => {
       {
         $project: {
           _id: 0,
-          year: "$_id.year",
-          month: "$_id.month",
-          day: "$_id.day",
+          date: "$_id",
           totalRevenue: 1,
         },
       },
       {
         $sort: {
-          year: 1,
-          month: 1,
-          day: 1,
+          date: 1,
         },
       },
     ]);
-    if (result.length > 0) {
-      return result;
-    }
-    return 0;
+    return result;
   } catch (error) {
     console.log(
       "Error in statistics.services -> getRevenueByDateRange: ",
@@ -177,68 +168,169 @@ exports.getYearlyRevenue = async () => {
   }
 };
 
+exports.getRevenueByQuarter = async (year) => {
+  try {
+    const result = await Order.aggregate([
+      // BƯỚC 1: Lọc ra các đơn hàng đã thành công để tính doanh thu
+      // Chỉ tính doanh thu từ các đơn hàng đã giao thành công hoặc đã được nhận.
+      {
+        $match: {
+          status: { $in: ["Giao thành công", "Đã nhận"] },
+          createdAt: {
+            $gte: new Date(`${year}-01-01T00:00:00.000z`),
+            $lte: new Date(`${year + 1}-01-01T00:00:00.000z`),
+          },
+          // Bạn cũng có thể thêm điều kiện is_Paid: true nếu muốn tính doanh thu thực nhận
+          // is_Paid: true
+        },
+      },
+
+      // BƯỚC 2: Nhóm các đơn hàng theo Năm và Quý
+      {
+        $group: {
+          _id: {
+            // Lấy ra năm từ ngày tạo đơn hàng
+            year: { $year: "$createdAt" },
+
+            // Xác định quý (quarter) dựa trên tháng
+            // Dùng $cond để tạo logic if-then-else
+            quarter: {
+              $cond: [
+                { $lte: [{ $month: "$createdAt" }, 3] }, // Nếu tháng <= 3
+                1, // Thì là Quý 1
+                {
+                  $cond: [
+                    { $lte: [{ $month: "$createdAt" }, 6] }, // Nếu tháng <= 6
+                    2, // Thì là Quý 2
+                    {
+                      $cond: [
+                        { $lte: [{ $month: "$createdAt" }, 9] }, // Nếu tháng <= 9
+                        3, // Thì là Quý 3
+                        4, // Ngược lại là Quý 4
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+          // Tính tổng doanh thu cho mỗi nhóm (quý)
+          // Sử dụng total_amount hoặc sub_total_amount tùy theo logic kinh doanh của bạn
+          totalRevenue: { $sum: "$sub_total_amount" },
+
+          // Đếm số lượng đơn hàng trong mỗi quý
+          orderCount: { $sum: 1 },
+        },
+      },
+
+      // BƯỚC 3: Định dạng lại kết quả đầu ra cho đẹp và dễ sử dụng
+      {
+        $project: {
+          _id: 0, // Bỏ trường _id không cần thiết
+          year: "$_id.year",
+          quarter: "$_id.quarter",
+          totalRevenue: "$totalRevenue",
+          orderCount: "$orderCount",
+        },
+      },
+
+      // BƯỚC 4: Sắp xếp kết quả theo năm và quý tăng dần để dễ theo dõi
+      {
+        $sort: {
+          year: 1,
+          quarter: 1,
+        },
+      },
+    ]);
+
+    return result;
+  } catch (error) {
+    console.error("Error in getRevenueByQuarter service: ", error);
+    throw new Error("Có lỗi xảy ra khi thống kê doanh thu theo quý.");
+  }
+};
+
 exports.getYearlyPercentageOfSales = async () => {
   try {
     const result = await Order.aggregate([
-      //B1: Tìm các đơn hàng theo năm có status là Giao thành công hoặc đã nhận
+      // B1: Lọc các đơn hàng đã hoàn thành (ĐÚNG)
       {
         $match: {
           status: { $in: ["Giao thành công", "Đã nhận"] },
         },
       },
-      //B2: Mở mảng order item
+      // B2: Mở mảng orderItems để xử lý từng sản phẩm (ĐÚNG)
       {
         $unwind: "$orderItems",
       },
-      //B3: Nhóm id_cate
+      // B4: Nhóm lại để tính tổng số lượng bán ra cho MỖI CATEGORY trong MỖI NĂM
       {
         $group: {
           _id: {
             year: { $year: "$createdAt" },
-            categoryId: "$orderItems.cate_name",
+            // Bây giờ "$orderItems.cate_name" là một ObjectId duy nhất và đúng
+            categoryName: "$orderItems.cate_name",
           },
           quantityPerCategory: { $sum: "$orderItems.quantity" },
         },
       },
+
+      // B5: Lookup để lấy tên category.
+      // SỬA LỖI: Không cần bước $toObjectId nữa. Lookup trực tiếp.
       {
         $lookup: {
-          from: "categories",
-          localField: "_id.categoryId",
+          from: "categories", // Tên collection của category
+          localField: "_id.categoryName",
           foreignField: "_id",
           as: "categoryDetails",
         },
       },
-      { $unwind: "$categoryDetails" },
+
+      // Nếu không tìm thấy category (bị xóa,...), ta sẽ loại bỏ nó để tránh lỗi
+      // Dùng $match để chỉ giữ lại những kết quả có categoryDetails không rỗng
+      {
+        $match: { categoryDetails: { $ne: [] } },
+      },
+      // Sau đó unwind để lấy object category ra
+      {
+        $unwind: "$categoryDetails",
+      },
+
+      // B6: Nhóm lại một lần nữa chỉ theo NĂM để tính tổng của cả năm
       {
         $group: {
           _id: "$_id.year",
           yearlyTotalQuantity: { $sum: "$quantityPerCategory" },
-          categories: {
+          categoriesData: {
             $push: {
-              categoryId: "$_id.categoryId",
-              categoryName: "$categoryDetails.name",
+              categoryName: "$_id.categoryName",
               totalQuantitySold: "$quantityPerCategory",
             },
           },
         },
       },
-      { $unwind: "$categories" },
+
+      // B7: Mở mảng categoriesData để tính toán phần trăm cho từng category
+      {
+        $unwind: "$categoriesData",
+      },
+
+      // B8: Định dạng lại kết quả cuối cùng, tính toán phần trăm
       {
         $project: {
           _id: 0,
           year: "$_id",
           yearlyTotalQuantity: 1,
           categoryInfo: {
-            categoryId: "$categories.categoryId",
-            categoryName: "$categories.categoryName",
-            totalQuantitySold: "$categories.totalQuantitySold",
+            categoryName: "$categoriesData.categoryName",
+            totalQuantitySold: "$categoriesData.totalQuantitySold",
             salesPercentage: {
               $round: [
                 {
                   $multiply: [
                     {
                       $divide: [
-                        "$categories.totalQuantitySold",
+                        "$categoriesData.totalQuantitySold",
                         "$yearlyTotalQuantity",
                       ],
                     },
@@ -251,6 +343,8 @@ exports.getYearlyPercentageOfSales = async () => {
           },
         },
       },
+
+      // B9: Nhóm lại lần cuối theo năm để có cấu trúc như mong muốn
       {
         $group: {
           _id: "$year",
@@ -258,6 +352,8 @@ exports.getYearlyPercentageOfSales = async () => {
           statistics: { $push: "$categoryInfo" },
         },
       },
+
+      // B10: Định dạng lại và sắp xếp
       {
         $project: {
           _id: 0,
@@ -297,7 +393,7 @@ exports.getMonthlyPercentageOfSales = async (year) => {
           _id: {
             year: { $year: "$createdAt" },
             month: { $month: "$createdAt" },
-            categoryId: "$orderItems.cate_name",
+            categoryName: "$orderItems.cate_name",
           },
           quantityPerCategory: { $sum: "$orderItems.quantity" },
         },
@@ -305,13 +401,13 @@ exports.getMonthlyPercentageOfSales = async (year) => {
       {
         $lookup: {
           from: "categories",
-          localField: "_id.categoryId",
+          localField: "_id.categoryName",
           foreignField: "_id",
-          as: "categoryDetail",
+          as: "categoryDetails",
         },
       },
       {
-        $unwind: "$categoryDetail",
+        $unwind: "$categoryDetails",
       },
       {
         $group: {
@@ -322,8 +418,7 @@ exports.getMonthlyPercentageOfSales = async (year) => {
           monthlyTotalQuantity: { $sum: "$quantityPerCategory" },
           categories: {
             $push: {
-              categoryId: "$_id.categoryId",
-              categoryName: "$categoryDetail.name",
+              categoryName: "$_id.categoryName",
               totalQuantitySold: "$quantityPerCategory",
             },
           },
@@ -337,7 +432,6 @@ exports.getMonthlyPercentageOfSales = async (year) => {
           month: "$_id.month",
           monthlyTotalQuantity: 1,
           categoryInfo: {
-            categoryId: "$categories.categoryId",
             categoryName: "$categories.categoryName",
             totalQuantitySold: "$categories.totalQuantitySold",
             salesPercentage: {
@@ -393,17 +487,17 @@ exports.getMonthlyPercentageOfSales = async (year) => {
 
 exports.getDateRangePercentageOfSales = async (startDate, endDate) => {
   try {
-    startDate.setHours(0,0,0,0)
-    endDate.setHours(23,59,59,999)
-     const orders = await Order.aggregate([
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 999);
+    const orders = await Order.aggregate([
       {
         $match: {
-          status: { $in: ["Giao thành công", "Đã giao"] }, // Trạng thái đơn hàng
-          orderDate: { $gte: new Date(startDate), $lte: new Date(endDate) }, // Lọc theo ngày
+          status: { $in: ["Giao thành công", "Đã nhận"] }, // Trạng thái đơn hàng
+          createdAt: { $gte: new Date(startDate), $lte: new Date(endDate) }, // Lọc theo ngày
         },
       },
       {
-        $unwind: "$orderItem", // Mở rộng orderItems
+        $unwind: "$orderItems", // Mở rộng orderItems
       },
       {
         $group: {
@@ -415,7 +509,7 @@ exports.getDateRangePercentageOfSales = async (startDate, endDate) => {
 
     // Nếu không có đơn hàng nào thì trả về 0
     if (orders.length === 0) {
-      return "Không có đơn hàng nào trong khoảng thời gian này";
+      return [];
     }
 
     // Truy vấn tổng số lượng sản phẩm bán ra trong danh mục (tất cả sản phẩm trong danh mục)
@@ -437,16 +531,16 @@ exports.getDateRangePercentageOfSales = async (startDate, endDate) => {
     ]);
 
     // Tính tỉ lệ bán ra
-    const salesRatio = orders.map(order => {
+    const salesRatio = orders.map((order) => {
       const categorySale = categoryTotalSales.find(
-        catSale => catSale._id.toString() === order._id.toString()
+        (catSale) => catSale._id.toString() === order._id.toString()
       );
-      const ratio = categorySale
+      const ratio = (categorySale && categorySale.total_quantity > 0)
         ? (order.total_quantity / categorySale.total_quantity) * 100
         : 0;
 
       return {
-        categoryId: order._id,
+        categoryName: order._id,
         salesRatio: ratio,
       };
     });
@@ -461,3 +555,4 @@ exports.getDateRangePercentageOfSales = async (startDate, endDate) => {
     throw new Error("Lỗi trong quá trình tính toán tỉ lệ bán ra mỗi ngày");
   }
 };
+

@@ -25,7 +25,7 @@ const OrderSchema = new Schema(
     ],
     id_address: {
       type: Schema.Types.ObjectId,
-      ref: "address",
+      ref: "Address",
       required: true,
     },
     shipping: { type: Number, default: 20000 },
@@ -77,7 +77,7 @@ module.exports = mongoose.model("order", OrderSchema);
  *               image:
  *                 type: String
  *         shipping: 
- *           typye: string
+ *           type: string
  *         status:
  *           type: String
  *           default: "Chờ xác nhận"
