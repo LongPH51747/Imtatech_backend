@@ -26,6 +26,9 @@ const swaggerOptions = {
       {
         url: 'https://3c23700d5553.ngrok-free.app',
       },
+      {
+        url: 'http://localhost:5000',
+      },
     ],
   },
   apis: ['./src/module/**/*.js'], // sửa đúng path đến router nếu cần
