@@ -36,6 +36,8 @@ var order = require('./src/module/order/order.router')
 var statistics = require('./src/module/statistics/statistics.router')
 var plantaAPI = require('./src/module/planta_id/planta_api.router')
 var address = require('./src/module/address/address.router')
+var chat = require('./src/module/chat/chat.route')
+var message = require('./src/module/messages/message.route')
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
@@ -75,6 +77,8 @@ app.use('/api/order', order)
 app.use('/api/plant', plantaAPI)
 app.use('/api/statistics', statistics)
 app.use('/api/address', address)
+app.use('/api/chat', chat)
+app.use('/api/messages', message)
 // catch 404 and forward to error handler
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); // Cung cap API docs
 

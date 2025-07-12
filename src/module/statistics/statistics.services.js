@@ -158,10 +158,7 @@ exports.getYearlyRevenue = async () => {
         },
       },
     ]);
-    if (result.length > 0) {
-      return result;
-    }
-    return 0;
+    return result;
   } catch (error) {
     console.log("Error in statistics.services -> getRevenueByMonth: ", error);
     throw new Error("Có lỗi đã xảy ra khi tính toán doanh thu");
@@ -250,6 +247,7 @@ exports.getRevenueByQuarter = async (year) => {
   }
 };
 
+//thống kê tỉ lệ sản phẩm bán ra theo danh mục
 exports.getYearlyPercentageOfSales = async () => {
   try {
     const result = await Order.aggregate([
@@ -277,24 +275,24 @@ exports.getYearlyPercentageOfSales = async () => {
 
       // B5: Lookup để lấy tên category.
       // SỬA LỖI: Không cần bước $toObjectId nữa. Lookup trực tiếp.
-      {
-        $lookup: {
-          from: "categories", // Tên collection của category
-          localField: "_id.categoryName",
-          foreignField: "_id",
-          as: "categoryDetails",
-        },
-      },
+      // {
+      //   $lookup: {
+      //     from: "categories", // Tên collection của category
+      //     localField: "_id.categoryName",
+      //     foreignField: "_id",
+      //     as: "categoryDetails",
+      //   },
+      // },
 
       // Nếu không tìm thấy category (bị xóa,...), ta sẽ loại bỏ nó để tránh lỗi
       // Dùng $match để chỉ giữ lại những kết quả có categoryDetails không rỗng
-      {
-        $match: { categoryDetails: { $ne: [] } },
-      },
+      // {
+      //   $match: { categoryDetails: { $ne: [] } },
+      // },
       // Sau đó unwind để lấy object category ra
-      {
-        $unwind: "$categoryDetails",
-      },
+      // {
+      //   $unwind: "$categoryDetails",
+      // },
 
       // B6: Nhóm lại một lần nữa chỉ theo NĂM để tính tổng của cả năm
       {
@@ -398,17 +396,17 @@ exports.getMonthlyPercentageOfSales = async (year) => {
           quantityPerCategory: { $sum: "$orderItems.quantity" },
         },
       },
-      {
-        $lookup: {
-          from: "categories",
-          localField: "_id.categoryName",
-          foreignField: "_id",
-          as: "categoryDetails",
-        },
-      },
-      {
-        $unwind: "$categoryDetails",
-      },
+      // {
+      //   $lookup: {
+      //     from: "categories",
+      //     localField: "_id.categoryName",
+      //     foreignField: "_id",
+      //     as: "categoryDetails",
+      //   },
+      // },
+      // {
+      //   $unwind: "$categoryDetails",
+      // },
       {
         $group: {
           _id: {
@@ -509,7 +507,7 @@ exports.getDateRangePercentageOfSales = async (startDate, endDate) => {
 
     // Nếu không có đơn hàng nào thì trả về 0
     if (orders.length === 0) {
-      return [];
+      return "Không có đơn hàng nào trong khoảng thời gian này";
     }
 
     // Truy vấn tổng số lượng sản phẩm bán ra trong danh mục (tất cả sản phẩm trong danh mục)
@@ -524,7 +522,7 @@ exports.getDateRangePercentageOfSales = async (startDate, endDate) => {
       },
       {
         $group: {
-          _id: "$orderItems.cate_name", // Group theo categoryId
+          _id: "$orderItems.cate_name.category_name", // Group theo categoryId
           total_quantity: { $sum: "$orderItems.quantity" }, // Tính tổng số lượng sản phẩm bán ra của tất cả các sản phẩm trong danh mục
         },
       },
@@ -535,7 +533,7 @@ exports.getDateRangePercentageOfSales = async (startDate, endDate) => {
       const categorySale = categoryTotalSales.find(
         (catSale) => catSale._id.toString() === order._id.toString()
       );
-      const ratio = (categorySale && categorySale.total_quantity > 0)
+      const ratio = categorySale
         ? (order.total_quantity / categorySale.total_quantity) * 100
         : 0;
 
@@ -556,3 +554,129 @@ exports.getDateRangePercentageOfSales = async (startDate, endDate) => {
   }
 };
 
+exports.getQuaterPercentOfSales = async (year) => {
+  try {
+    console.log("year", year);
+    const result = await Order.aggregate([
+      // --- Giai đoạn 1: Lọc các đơn hàng ---
+      {
+        $match: {
+          status: { $in: ["Giao thành công", "Đã nhận"] },
+          createdAt: {
+            $gte: new Date(`${year}-01-01T00:00:00.000z`),
+            $lte: new Date(`${year + 1}-01-01T00:00:00.000z`),
+          },
+        },
+      },
+      // --- Giai đoạn 2: Tách mảng orderItems để xử lý từng sản phẩm ---
+      {
+        $unwind: "$orderItems",
+      },
+
+      // --- Giai đoạn 4: Nhóm theo Quý, Năm và Danh mục để tính tổng số lượng ---
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            quarter: {
+              $cond: [
+                { $lte: [{ $month: "$createdAt" }, 3] }, // Nếu tháng <= 3
+                1, // Thì là Quý 1
+                {
+                  $cond: [
+                    { $lte: [{ $month: "$createdAt" }, 6] }, // Nếu tháng <= 6
+                    2, // Thì là Quý 2
+                    {
+                      $cond: [
+                        { $lte: [{ $month: "$createdAt" }, 9] }, // Nếu tháng <= 9
+                        3, // Thì là Quý 3
+                        4, // Ngược lại là Quý 4
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            category: "$orderItems.cate_name",
+          },
+          // Tính tổng số lượng sản phẩm bán ra cho danh mục này trong quý này
+          totalQuantitySold: { $sum: "$orderItems.quantity" },
+        },
+      },
+      // --- Giai đoạn 5: Nhóm lại theo Quý và Năm để tính tổng của cả quý ---
+      {
+        $group: {
+          _id: {
+            year: "$_id.year",
+            quarter: "$_id.quarter",
+          },
+          // Tính tổng số lượng bán ra của TẤT CẢ các danh mục trong quý
+          totalQuarterlyQuantity: { $sum: "$totalQuantitySold" },
+          // Thu thập thông tin chi tiết của từng danh mục vào một mảng
+          categoryBreakdown: {
+            $push: {
+              categoryName: "$_id.category",
+              quantity: "$totalQuantitySold",
+            },
+          },
+        },
+      },
+      // --- Giai đoạn 6: Thêm trường tỷ lệ phần trăm ---,
+      {
+        $addFields: {
+          // Dùng $map để lặp qua mảng categoryBreakdown và tính toán tỷ lệ
+          statistics: {
+            $map: {
+              input: "$categoryBreakdown",
+              as: "category",
+              in: {
+                categoryName: "$$category.categoryName",
+                quantitySold: "$$category.quantity",
+                percentage: {
+                  $round: [
+                    // Làm tròn đến 2 chữ số thập phân
+                    {
+                      $multiply: [
+                        {
+                          $divide: [
+                            "$$category.quantity",
+                            "$totalQuarterlyQuantity",
+                          ],
+                        },
+                        100,
+                      ],
+                    },
+                    2,
+                  ],
+                },
+              },
+            },
+          },
+        },
+      },
+      // --- Giai đoạn 7: Định dạng lại kết quả cuối cùng ---
+      {
+        $project: {
+          _id: 0, // Bỏ trường _id mặc định
+          year: "$_id.year",
+          quarter: "$_id.quarter",
+          totalQuarterlyQuantity: 1,
+          statistics: 1,
+        },
+      },
+
+      // --- Giai đoạn 8: Sắp xếp kết quả, mới nhất lên đầu ---
+      {
+        $sort: {
+          year: 1,
+          quarter: 1,
+        },
+      },
+    ]);
+
+    return result;
+  } catch (error) {
+    console.error("Error in getQuaterPercentOfSales service: ", error);
+    throw new Error("Có lỗi xảy ra khi thống kê tỉ lệ bán ra theo quý.");
+  }
+};

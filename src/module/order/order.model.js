@@ -20,7 +20,7 @@ const OrderSchema = new Schema(
         unit_price_item: { type: Number },
         total_price_item: { type: Number },
         image: { type: String },
-        cate_name: {type: Schema.Types.ObjectId, ref: "Category"}
+        cate_name: {type: String}
       },
     ],
     id_address: {

@@ -85,3 +85,52 @@ exports.getDateRangePercentageOfSales = async (req, res) => {
       .json({ message: "Failed to getDateRangePercentageOfSales" });
   }
 };
+
+exports.getMonthPercentageOfSales = async (req, res) => {
+  try {
+    const year = parseInt(req.query.year);
+    const getMonthPercentageOfSales =
+      await statisticsServices.getMonthlyPercentageOfSales(year);
+    if (!getMonthPercentageOfSales) {
+      return res.status(404).json({ message: "Cannot found" });
+    }
+    return res.status(200).json(getMonthPercentageOfSales);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to getMonthPercentageOfSales" });
+  }
+};
+
+exports.getQuarterlyRevenue = async (req, res) => {
+  try {
+    const year = parseInt(req.query.year);
+
+    const revenueData = await statisticsServices.getRevenueByQuarter(year);
+
+    if (!revenueData || revenueData.length === 0) {
+      return res.status(200).json({
+        message: "Không tìm thấy dữ liệu doanh thu.",
+        data: [],
+      });
+    }
+
+    res.status(200).json(revenueData);
+  } catch (error) {
+    res.status(500).json({
+      message: error.message || "Đã có lỗi xảy ra.",
+    });
+  }
+};
+
+exports.getQuaterPercentOfSales = async (req, res) => {
+  try {
+    const year = parseInt(req.query.year);
+    const getQuaterPercentOfSales =
+      await statisticsServices.getQuaterPercentOfSales(year);
+    if (!getQuaterPercentOfSales) {
+      return res
+        .status(200)
+        .json({ message: "Không tìm thấy dữ liệu để thống kê", data: [] });
+    }
+    return res.status(200).json(getQuaterPercentOfSales);
+  } catch (error) {}
+};

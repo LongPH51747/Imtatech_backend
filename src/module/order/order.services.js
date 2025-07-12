@@ -80,7 +80,9 @@ exports.create = async (orderData, userId) => {
       if (productsToUpdateStock.has(item.id_product.toString())) {
         productDoc = productsToUpdateStock.get(item.id_product.toString());
       } else {
-        productDoc = await Product.findById(item.id_product).session(session);
+        productDoc = await Product.findById(item.id_product)
+          .populate({ path: "id_cate", select: "name" })
+          .session(session);
         if (!productDoc) {
           throw createError(
             404,
@@ -123,7 +125,7 @@ exports.create = async (orderData, userId) => {
         unit_price_item: productDoc.price,
         total_price_item: itemTotalPrice,
         image: image_url,
-        cate_name: productDoc.id_cate
+        cate_name: productDoc.id_cate.name,
       });
 
       subTotalAmountForOrder += itemTotalPrice;

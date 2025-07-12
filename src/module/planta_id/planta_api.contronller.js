@@ -50,7 +50,7 @@ const handleCreateIdentification = async (req, res) => {
     }
 
     // Nếu xác suất đủ cao, trả về kết quả thành công
-    res.status(201).json(identificationData);
+    res.status(201).json({identificationData: identificationData});
   } catch (error) {
     console.error("Lỗi khi nhận dạng cây:", error.message);
     res.status(500).json({ success: false, message: error.message });
