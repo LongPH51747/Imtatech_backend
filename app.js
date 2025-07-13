@@ -7,7 +7,7 @@ const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
 var logger = require('morgan');
 const http = require('http');
-
+const { upload, uploadImageToCloudinary } = require('./middleware/uploadMiddleware');
 // Import routes
 const indexRouter = require('./routes/index');
 const userRouter = require('./src/module/user/user.router');
@@ -18,6 +18,7 @@ const orderRouter = require('./src/module/order/order.router');
 const chatRouter = require('./src/module/chat/chat.route');
 const messageRouter = require('./src/module/messages/message.route');
 const plantaAPIRouter = require('./src/module/planta_id/planta_api.router');
+const statisticsRouter = require('./src/module/statistics/statistics.router');
 
 // Import configurations
 const db = require('./src/config/db');
@@ -25,6 +26,7 @@ const swaggerSpec = require('./src/docs/swagger');
 
 // Import Socket Manager
 const SocketManager = require('./src/socket/socket');
+const authMiddleware = require('./middleware/authMiddleware');
 
 const app = express();
 const server = http.createServer(app);
@@ -35,12 +37,12 @@ const socketManager = new SocketManager(server);
 // Lưu socketManager vào app để sử dụng ở nơi khác
 app.set('socketManager', socketManager);
 
-// View engine setup
-var cart = require('./src/module/cart/cart.router')
-var product = require('./src/module/product/product.router')
-var order = require('./src/module/order/order.router')
-var statistics = require('./src/module/statistics/statistics.router')
-var plantaAPI = require('./src/module/planta_id/planta_api.router')
+// // View engine setup
+// var cart = require('./src/module/cart/cart.router')
+// var product = require('./src/module/product/product.router')
+// var order = require('./src/module/order/order.router')
+// var statistics = require('./src/module/statistics/statistics.router')
+// var plantaAPI = require('./src/module/planta_id/planta_api.router')
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
@@ -67,12 +69,26 @@ db.connectDB();
 app.use('/', indexRouter);
 app.use('/api/users', userRouter);
 app.use('/api/categories', categoryRouter);
-app.use('/api/products', productRouter);
-app.use('/api/cart', cartRouter);
-app.use('/api/order', orderRouter);
+app.use('/api/products', productRouter); // Sử dụng productRouter
+app.use('/api/cart', cartRouter);       // Sử dụng cartRouter
+app.use('/api/order', orderRouter);     // Sử dụng orderRouter
 app.use('/api/chat', chatRouter);
 app.use('/api/messages', messageRouter);
-app.use('/api', plantaAPIRouter);
+app.use('/api', plantaAPIRouter);      // Sử dụng plantaAPIRouter
+app.use('/api/statistics', statisticsRouter);
+
+app.post('/api/upload-image',
+    authMiddleware, // Middleware xác thực JWT của bạn
+    upload.single('image'),     // Multer middleware để xử lý file 'image'
+    uploadImageToCloudinary,    // Middleware để tải file lên Cloudinary
+    (req, res) => { // Route handler cuối cùng
+        // Sau khi uploadImageToCloudinary chạy, req.cloudinaryImageUrl sẽ có sẵn
+        res.status(200).json({
+            message: 'Image uploaded successfully to Cloudinary',
+            imageUrl: req.cloudinaryImageUrl, // Lấy URL từ req được gắn bởi middleware
+        });
+    }
+);
 // ROUTES
 
 // Swagger API Documentation
@@ -84,15 +100,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customSiteTitle: "ImtaTech API Documentation"
 }));
 
-db.connectDB();
-app.use('/', indexRouter);
-app.use('/api/users', userRouter);
-app.use('/api/categories', categoryRouter);
-app.use('/api/products', product)
-app.use('/api/cart', cart)
-app.use('/api/order', order)
-app.use('/api/plant', plantaAPI)
-app.use('/api/statistics', statistics)
+
 // catch 404 and forward to error handler
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); // Cung cap API docs
 
