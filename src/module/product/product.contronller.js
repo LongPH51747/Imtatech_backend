@@ -164,6 +164,16 @@ exports.updateProduct = async (req, res, next) => {
     const id = req.params.id;
     console.log("Update product ID:", id);
     const data = req.body;
+    console.log("data: ", data);
+    
+    if (typeof data === "string") {
+      try {
+        data = JSON.parse(data);
+      } catch (error) {
+        throw new Error("Phải truyền vào một JSON hợp lệ");
+      }
+    }
+    console.log("update product data: ", data);
     const file = req.file || null; // Ảnh sản phẩm nếu có (từ form-data)
     const result = await productServices.updateProduct(id, data, file);
     if (!result) {

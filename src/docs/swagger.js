@@ -24,7 +24,7 @@ const swaggerOptions = {
     ],
     servers: [
       {
-        url: 'https://3c23700d5553.ngrok-free.app',
+        url: 'https://8bbadc0e5099.ngrok-free.app',
       },
       {
         url: 'http://localhost:5000',

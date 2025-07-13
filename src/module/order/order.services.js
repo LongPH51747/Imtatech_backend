@@ -278,23 +278,70 @@ exports.create = async (orderData, userId) => {
 //   }
 // };
 
-exports.updateStatus = async (orderStatus, id, res) => {
+exports.updateStatus = async (orderStatus, id) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
-    const data = await Order.findById(id);
-    if (!data) {
-      return res.status(404).json({ message: "Order not found in services" });
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw createError(400, "ID đơn hàng không hợp lệ");
     }
 
-    data.status = orderStatus;
-    await data.save;
+    const order = await Order.findById(id).session(session);
+    if (!order) {
+      throw createError(404, "Không tìm thấy đơn hàng");
+    }
 
-    return data;
+    // Kiểm tra xem trạng thái mới có hợp lệ không
+    if (
+      order.status === "Hủy đơn" ||
+      order.status === "Hủy" ||
+      order.status === "hủy" ||
+      order.status === "hủy đơn" ||
+      order.status === "Hoàn hàng" ||
+      order.status === "hoàn hàng"
+    ) {
+      throw createError(
+        400,
+        `Không thể chuyển đơn hàng từ trạng thái ${order.status} sang ${orderStatus}`
+      );
+    }
+
+    // Xử lý đặc biệt khi hủy đơn hàng
+    if (
+      orderStatus === "Hủy đơn" ||
+      orderStatus === "Hủy" ||
+      orderStatus === "hủy" ||
+      orderStatus === "hủy đơn"
+    ) {
+      // Hoàn lại số lượng tồn kho
+      for (const item of order.orderItems) {
+        const product = await Product.findOne({
+          "product._id": item.id_product,
+        }).session(session);
+
+        if (product) {
+            product.stock += item.quantity;
+            await product.save({ session });
+        }
+      }
+      order.cancelledAt = new Date();
+    }
+
+    order.status = orderStatus;
+    const updatedOrder = await order.save({ session });
+
+    await session.commitTransaction();
+    return updatedOrder;
   } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      message: "Failed to update order status in services",
-      error: error,
-    });
+    await session.abortTransaction();
+    console.error("Service updateStatus error:", error);
+    if (!error.statusCode) {
+      error.statusCode = 500;
+    }
+    throw error;
+  } finally {
+    session.endSession();
   }
 };
 
